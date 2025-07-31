@@ -1,0 +1,104 @@
+# -*- coding: utf-8 -*-
+"""Redshift Proxy extractor."""
+from __future__ import annotations
+import os
+from typing import Union
+
+from ayon_maya.api.lib import maintained_selection, renderlayer
+from ayon_maya.api import plugin
+from ayon_maya.api.render_setup_tools import (
+    allow_export_from_render_setup_layer,
+)
+from maya import cmds
+
+
+class ExtractRedshiftProxy(plugin.MayaExtractorPlugin):
+    """Extract the content of the instance to a redshift proxy file."""
+
+    label = "Redshift Proxy (.rs)"
+    families = ["redshiftproxy"]
+    targets = ["local", "remote"]
+
+    def process(self, instance):
+        """Extractor entry point."""
+
+        # Make sure Redshift is loaded
+        cmds.loadPlugin("redshift4maya", quiet=True)
+
+        anim_on: bool = instance.data["animation"]
+        if anim_on:
+            # Add frame number #### placeholder for animated exports
+            file_name = "{}.####.rs".format(instance.name)
+        else:
+            file_name = "{}.rs".format(instance.name)
+
+        staging_dir = self.staging_dir(instance)
+        file_path = os.path.join(staging_dir, file_name)
+
+        rs_options = "exportConnectivity=0;enableCompression=1;keepUnused=0;"
+        repr_files: Union[str, list[str]] = file_name
+        if not anim_on:
+            # Remove animation information because it is not required for
+            # non-animated products
+            keys = ["frameStart",
+                    "frameEnd",
+                    "handleStart",
+                    "handleEnd",
+                    "frameStartHandle",
+                    "frameEndHandle"]
+            for key in keys:
+                instance.data.pop(key, None)
+
+        else:
+            start_frame = instance.data["frameStartHandle"]
+            end_frame = instance.data["frameEndHandle"]
+            rs_options = "{}startFrame={};endFrame={};frameStep={};".format(
+                rs_options, start_frame,
+                end_frame, instance.data["step"]
+            )
+            repr_files: list[str] = []
+            for frame in range(
+                    int(start_frame),
+                    int(end_frame) + 1,
+                    int(instance.data["step"])):
+                frame_padded = str(frame).rjust(4, "0")
+                frame_filename = file_name.replace(
+                    ".####.rs", f".{frame_padded}.rs"
+                )
+                repr_files.append(frame_filename)
+
+        # Write out rs file
+        self.log.debug("Writing: '%s'", file_path)
+
+        # Allow overriding what renderlayer to export from. By default, force
+        # it to the default render layer. (Note that the renderlayer isn't
+        # currently exposed as an attribute to artists)
+        layer = instance.data.get("renderLayer", "defaultRenderLayer")
+
+        with maintained_selection():
+            with renderlayer(layer):
+                with allow_export_from_render_setup_layer():
+                    cmds.select(instance.data["setMembers"], noExpand=True)
+                    cmds.file(file_path,
+                              preserveReferences=False,
+                              force=True,
+                              type="Redshift Proxy",
+                              exportSelected=True,
+                              options=rs_options)
+
+        if "representations" not in instance.data:
+            instance.data["representations"] = []
+
+        self.log.debug("Files: {}".format(repr_files))
+
+        representation = {
+            'name': 'rs',
+            'ext': 'rs',
+            'files': repr_files,
+            "stagingDir": staging_dir,
+        }
+        instance.data["representations"].append(representation)
+
+        self.log.debug(
+            f"Extracted instance '{instance.name}' to: {staging_dir}"
+        )
