@@ -664,6 +664,9 @@ def on_new():
 
     _remove_workfile_lock()
 
+    import jean_moulinette.lib as scripts_lib
+    scripts_lib.execute_script(get_current_project_name(), "initialize_workfile_from_template")
+
 
 def on_task_changed():
     """Wrapped function of app initialize and maya's on task changed"""
