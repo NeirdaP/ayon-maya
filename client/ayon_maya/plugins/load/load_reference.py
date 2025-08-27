@@ -125,6 +125,7 @@ class ReferenceLoader(plugin.ReferenceLoader):
         "skeletalMesh",
         "mvLook",
         "matchmove",
+        "actorbase"
     }
 
     representations = {"ma", "abc", "fbx", "mb"}
