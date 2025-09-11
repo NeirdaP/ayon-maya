@@ -125,6 +125,14 @@ class ImportMayaLoader(ayon_maya.api.plugin.Loader):
                 "When enabled, existing AYON 'cbId' attributes on nodes will "
                 "be removed upon import."
             )
+        ),
+        BoolDef(
+            "remove_namespace",
+            label="Remove namespace",
+            default=False,
+            tooltip=(
+                "When enabled, imported scene won't have namespace"
+            )
         )
     ]
 
@@ -141,24 +149,42 @@ class ImportMayaLoader(ayon_maya.api.plugin.Loader):
             return
 
         custom_group_name, custom_namespace, options = \
-            self.get_custom_namespace_and_group(context, data,
-                                                "import_loader")
+            self.get_custom_namespace_and_group(
+                context,
+                data,
+                "import_loader"
+            )
 
         namespace = get_custom_namespace(custom_namespace)
 
         if not options.get("attach_to_root", True):
             custom_group_name = namespace
 
+        if data.get("remove_namespace", False):
+            namespace = ""
+
         path = self.filepath_from_context(context)
         with maintained_selection():
-            nodes = cmds.file(path,
-                              i=True,
-                              preserveReferences=True,
-                              namespace=namespace,
-                              returnNewNodes=True,
-                              groupReference=options.get("attach_to_root",
-                                                         True),
-                              groupName=custom_group_name)
+            if data.get("remove_namespace", False):
+                nodes = cmds.file(
+                    path,
+                    i=True,
+                    preserveReferences=True,
+                    returnNewNodes=True,
+                    groupReference=options.get("attach_to_root", True),
+                    groupName=custom_group_name
+                )
+
+            else:
+                nodes = cmds.file(
+                    path,
+                    i=True,
+                    preserveReferences=True,
+                    namespace=namespace,
+                    returnNewNodes=True,
+                    groupReference=options.get("attach_to_root", True),
+                    groupName=custom_group_name
+                )
 
             if data.get("clean_import", False):
                 remove_attributes = ["cbId"]
