@@ -139,7 +139,6 @@ class OxRigLoaderModel(LoaderEnabledModel):
         )
     )
 
-
 class LoadersModel(BaseSettingsModel):
     colors: ColorsSetting = SettingsField(
         default_factory=ColorsSetting,
@@ -244,6 +243,10 @@ class LoadersModel(BaseSettingsModel):
         default_factory=OxRigLoaderModel,
         title="Ornatrix Rig Loader"
     )
+    SmoothLevelLoader: LoaderEnabledModel = SettingsField(
+        default_factory=LoaderEnabledModel,
+        title="Smooth Level Loader"
+    )
 
 
 DEFAULT_LOADERS_SETTING = {
@@ -325,4 +328,5 @@ DEFAULT_LOADERS_SETTING = {
         "enabled": True,
         "create_cache_instance_on_load": True
     },
+    "SmoothLevelLoader": {"enabled": True},
 }
