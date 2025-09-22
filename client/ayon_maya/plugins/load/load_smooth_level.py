@@ -39,8 +39,8 @@ class SmoothLevelLoader(Loader):
 
         path = self.filepath_from_context(context)
 
-        with open(path) as json_path:
-            data = json.load(json_path)
+        with open(path) as json_file:
+            data = json.load(json_file)
 
         mesh_list = data.get("attributes")
 
