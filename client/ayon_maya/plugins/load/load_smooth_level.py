@@ -58,4 +58,4 @@ class SmoothLevelLoader(Loader):
             except Exception as e:
                 self.log.info(f"Error : {e}")
                 pass
-        self.log.info(f">>> loading json [ {path} ]")
+        self.log.info(f">>> Loaded json [ {path} ] to set smooth levels")
