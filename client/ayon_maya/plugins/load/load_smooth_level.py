@@ -13,7 +13,7 @@ class SmoothLevelLoader(Loader):
     product_types = {"look"}
     representations = {"json"}
 
-    label = "Import smooth level"
+    label = "Import and assign smooth level"
     order = -10
     icon = "code-fork"
     color = "orange"
