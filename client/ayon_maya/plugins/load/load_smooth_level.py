@@ -13,7 +13,7 @@ class SmoothLevelLoader(Loader):
     product_types = {"look"}
     representations = {"json"}
 
-    label = "Import smooth level"
+    label = "Import and assign smooth level"
     order = -10
     icon = "code-fork"
     color = "orange"
@@ -39,8 +39,8 @@ class SmoothLevelLoader(Loader):
 
         path = self.filepath_from_context(context)
 
-        with open(path) as json_path:
-            data = json.load(json_path)
+        with open(path) as json_file:
+            data = json.load(json_file)
 
         mesh_list = data.get("attributes")
 
@@ -58,4 +58,4 @@ class SmoothLevelLoader(Loader):
             except Exception as e:
                 self.log.info(f"Error : {e}")
                 pass
-        self.log.info(f">>> loading json [ {path} ]")
+        self.log.info(f">>> Loaded json [ {path} ] to set smooth levels")
