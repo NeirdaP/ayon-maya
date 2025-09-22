@@ -30,7 +30,7 @@ class SmoothLevelLoader(Loader):
         Load Smooth level settings based on uuid.
         """
         # Get all node uuids from scene
-        scene_uuids = {}
+        scene_uuids = {}  # uuid is synonym of ayon cbid here
 
         for node in cmds.ls():
             node_uuid = ayon_maya.api.lib.get_id(node)
