@@ -45,49 +45,23 @@ class ExtractRedshiftProxyRender(plugin.MayaExtractorPlugin):
         # Make sure Redshift is loaded
         cmds.loadPlugin("redshift4maya", quiet=True)
 
-        # TODO might remove the animation attributes altogether based on feedback from testing
-        anim_on = False
-        if anim_on:
-            # Add frame number #### placeholder for animated exports
-            file_name = "{}.####.rs".format(instance.name)
-        else:
-            file_name = "{}.rs".format(instance.name)
-
+        file_name = "{}.rs".format(instance.name)
         staging_dir = self.staging_dir(instance)
         rs_file_path = os.path.join(staging_dir, file_name)
 
         rs_options = "exportConnectivity=0;enableCompression=1;keepUnused=0;"
         rs_repr_files: Union[str, list[str]] = file_name
-        if not anim_on:
-            # Remove animation information because it is not required for
-            # non-animated products
-            keys = ["frameStart",
-                    "frameEnd",
-                    "handleStart",
-                    "handleEnd",
-                    "frameStartHandle",
-                    "frameEndHandle"]
-            for key in keys:
-                instance.data.pop(key, None)
         
-        else:
-            start_frame = instance.data["frameStartHandle"]
-            end_frame = instance.data["frameEndHandle"]
-            rs_options = "{}startFrame={};endFrame={};frameStep={};".format(
-                rs_options, start_frame,
-                end_frame, instance.data["step"]
-            )
-            rs_repr_files: list[str] = []
-            for frame in range(
-                    int(start_frame),
-                    int(end_frame) + 1,
-                    int(instance.data["step"])):
-                frame_padded = str(frame).rjust(4, "0")
-                frame_filename = file_name.replace(
-                    ".####.rs", f".{frame_padded}.rs"
-                )
-                rs_repr_files.append(frame_filename)
-        
+        # Remove animation information because it is not required for
+        # non-animated products
+        keys = ["frameStart",
+                "frameEnd",
+                "handleStart",
+                "handleEnd",
+                "frameStartHandle",
+                "frameEndHandle"]
+        for key in keys:
+            instance.data.pop(key, None)
 
         # Write out rs file
         self.log.debug("Writing: '%s'", rs_file_path)

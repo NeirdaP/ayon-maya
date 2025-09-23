@@ -72,7 +72,7 @@ def convert_legacy_alembic_creator_attributes(node_data, class_name):
 
 
 class CreateProxyGpu(plugin.MayaCreator):
-    """Alembic pointcache for animated data"""
+    """Creator for alembic proxy gpu cache"""
 
     identifier = "io.openpype.creators.maya.proxygpu"
     label = "Proxy GPU"
@@ -80,7 +80,6 @@ class CreateProxyGpu(plugin.MayaCreator):
     icon = "gears"
     include_user_defined_attributes = False
 
-    # TODO might remove the extra attribute defs
     def read_instance_node(self, node):
         node_data = super(CreateProxyGpu, self).read_instance_node(node)
         node_data = convert_legacy_alembic_creator_attributes(

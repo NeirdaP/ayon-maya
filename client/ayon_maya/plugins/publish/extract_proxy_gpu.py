@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Redshift Proxy extractor."""
+"""Proxy gpu extractor."""
 from __future__ import annotations
 import os
 from ayon_maya.api import plugin
@@ -57,7 +57,7 @@ class ExtractProxyGPU(plugin.MayaExtractorPlugin):
                                     parent=root)
         cache = cmds.createNode("gpuCache",
                                 parent=transform,
-                                name="{0}Shape".format(transform_name))
+                                name=f"{transform_name}Shape")
 
         # Set the cache filepath
         cmds.setAttr(cache + '.cacheFileName', path, type="string")

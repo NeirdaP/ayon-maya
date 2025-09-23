@@ -8,7 +8,7 @@ from maya import cmds
 
 
 class ExtractActorBase(plugin.MayaExtractorPlugin):
-    """Extract actorBase (light rig) as Maya Scene."""
+    """Extract actorBase (simple base rig) as Maya Scene."""
 
     label = "Extract ActorBase (Maya Scene)"
     families = ["actorbase"]
@@ -47,7 +47,7 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         project = get_current_project_name()
         asset = get_current_folder_entity().get("name")
 
-        # Store data about displaced sets to clean up scene later
+        # Store data about moved sets to clean up scene later
         moved = {}
         for member in instance.data.get("setMembers"):
             if cmds.nodeType(member) != "transform":
@@ -66,13 +66,11 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         instance.data["moved"] = moved
         
 
-    def process(self, instance):
-        """Plugin entry point."""
-
-        # Prepare the scene by running pymonk actorize, which will 
-        # reorganize things into groups and create controls
-        self.prepare_scene(instance)
-
+    def get_staged_output_path(self, instance):
+        """
+            Determine the staged representation output path based on
+            staging directory, instance name, and configured scene type
+        """
         maya_settings = instance.context.data["project_settings"]["maya"]
         ext_mapping = {
             item["name"]: item["value"]
@@ -89,11 +87,25 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
                     break
                 except AttributeError:
                     # no preset found
+                    self.log.warning(f"No scene extension presets found for family: {family}")
                     pass
+
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         filename = "{0}.{1}".format(instance.name, self.scene_type)
-        path = os.path.join(dir_path, filename)
+
+        return os.path.join(dir_path, filename)
+
+
+    def process(self, instance):
+        """Plugin entry point."""
+
+        # Prepare the scene by running pymonk actorize, which will 
+        # reorganize things into groups and create controls
+        self.prepare_scene(instance)
+
+        # Get the output path in the staging directory
+        path = self.get_staged_output_path(instance)
 
         # Perform extraction
         self.log.debug("Performing extraction ...")
@@ -118,8 +130,8 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         representation = {
             'name': self.scene_type,
             'ext': self.scene_type,
-            'files': filename,
-            "stagingDir": dir_path
+            'files': os.path.basename(path),
+            "stagingDir": os.path.dirname(path)
         }
         instance.data["representations"].append(representation)
 

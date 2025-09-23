@@ -25,7 +25,7 @@ class CollectSubdivision(plugin.MayaInstancePlugin):
         # Add the value to the lookData attributes 
         lookData = instance.data.get("lookData")        
         if not lookData or not lookData.get("attributes"):
-            print("Instance look data does not exist, cannot add attributes (check plugin ordering)")
+            self.log.warning("Instance look data does not exist, cannot add attributes (check plugin ordering)")
             return 
         
         for entry in instance.data["lookData"]["attributes"]:
@@ -33,6 +33,7 @@ class CollectSubdivision(plugin.MayaInstancePlugin):
 
             for attr in self.subdiv_attributes:
                 if not cmds.attributeQuery(attr, node=node, exists=True):
+                    self.log.debug("Attribute {} does not exist on {}, skipping its collection".format(attr, node))
                     continue
 
                 attribute = "{}.{}".format(node, attr)
