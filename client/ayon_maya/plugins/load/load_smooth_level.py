@@ -53,9 +53,11 @@ class SmoothLevelLoader(Loader):
             if not mesh_name:
                 self.log.info(f"Warning: Node '{mesh_name}' with uuid '{mesh_uuid}' was not found in scene")
                 continue
+
+            attribute = f"{mesh_name}.smoothLevel"
             try:
-                cmds.setAttr(f"{mesh_name}.smoothLevel", smooth_level)
+                cmds.setAttr(attribute, smooth_level)
             except Exception as e:
-                self.log.info(f"Error : {e}")
-                pass
+                self.log.info(f"Failed setting attribute '{attribute}' with value '{smooth_level}': {e}")
+
         self.log.info(f">>> Loaded json [ {path} ] to set smooth levels")
