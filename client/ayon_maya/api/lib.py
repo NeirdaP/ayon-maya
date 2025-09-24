@@ -4251,11 +4251,12 @@ def create_rig_animation_instance(
     if options is None:
         options = {}
     name = context["representation"]["name"]
+    product_type = context["product"]["productType"]
     output = next((node for node in nodes if
                    node.endswith("out_SET")), None)
     controls = next((node for node in nodes if
                      node.endswith("controls_SET")), None)
-    if name != "fbx":
+    if name != "fbx" and product_type != "actorbase":
         if not output:
             raise RigSetsNotExistError(
                 "No out_SET in rig. The loaded rig publish is lacking the "
