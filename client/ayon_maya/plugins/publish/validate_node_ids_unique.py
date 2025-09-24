@@ -20,6 +20,7 @@ class ValidateNodeIdsUnique(plugin.MayaInstancePlugin):
     label = 'Non Duplicate Instance Members (ID)'
     families = ["model",
                 "look",
+                "lookanim",
                 "rig",
                 "yetiRig"]
 

@@ -10,7 +10,7 @@ class ExtractGPUCache(plugin.MayaExtractorPlugin,
     """Extract the content of the instance to a GPU cache file."""
 
     label = "GPU Cache"
-    families = ["model", "animation", "pointcache"]
+    families = ["model", "animation", "pointcache", "proxygpu"]
     targets = ["local", "remote"]
     step = 1.0
     stepSave = 1

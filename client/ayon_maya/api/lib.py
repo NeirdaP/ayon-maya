@@ -1872,7 +1872,7 @@ def list_looks(project_name, folder_id):
 
     """
     return list(ayon_api.get_products(
-        project_name, folder_ids=[folder_id], product_types={"look"}
+        project_name, folder_ids=[folder_id], product_types={"look", "lookanim"}
     ))
 
 
@@ -1992,7 +1992,7 @@ def assign_look(nodes, product_name="lookMain"):
             continue
 
         families = last_version.get("attrib", {}).get("families") or []
-        if "look" not in families:
+        if not any(family in families for family in ["look", "lookanim"]):
             log.warning((
                 "Last version for product '{}' on folder with id {}"
                 " does not have look product type"
