@@ -7,7 +7,7 @@ class CollectPointcache(plugin.MayaInstancePlugin):
     """Collect pointcache data for instance."""
 
     order = pyblish.api.CollectorOrder + 0.4
-    families = ["pointcache"]
+    families = ["pointcache", "proxygpu"]
     label = "Collect Pointcache"
 
     def process(self, instance):

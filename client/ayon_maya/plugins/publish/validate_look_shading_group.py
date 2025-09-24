@@ -19,7 +19,7 @@ class ValidateShadingEngine(plugin.MayaInstancePlugin,
     """
 
     order = ValidateContentsOrder
-    families = ["look"]
+    families = ["look", "lookanim"]
     label = "Look Shading Engine Naming"
     actions = [
         ayon_maya.api.action.SelectInvalidAction, RepairAction
