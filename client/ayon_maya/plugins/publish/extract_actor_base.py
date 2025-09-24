@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Extract actorbase as Maya Scene."""
+"""Extract rig as Maya Scene."""
 import os
 
 from ayon_maya.api.lib import maintained_selection
@@ -8,7 +8,7 @@ from maya import cmds
 
 
 class ExtractActorBase(plugin.MayaExtractorPlugin):
-    """Extract actorBase (light rig) as Maya Scene."""
+    """Extract actorBase (simple base rig) as Maya Scene."""
 
     label = "Extract ActorBase (Maya Scene)"
     families = ["actorbase"]
@@ -39,8 +39,38 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
                 unlock_and_delete(node)
 
 
-    def process(self, instance):
-        """Plugin entry point."""
+    def prepare_scene(self, instance):
+        from pymonk.src.api.run import actorize_geometry_transforms
+        from ayon_core.pipeline.context_tools import get_current_folder_entity, \
+                                                     get_current_project_name
+
+        project = get_current_project_name()
+        asset = get_current_folder_entity().get("name")
+
+        # Store data about moved sets to clean up scene later
+        moved = {}
+        for member in instance.data.get("setMembers"):
+            if cmds.nodeType(member) != "transform":
+                continue
+            parent = cmds.listRelatives(member, parent=True)
+            moved[cmds.ls(member)[0]] = parent[0] if parent else None
+        
+        try:
+            # Actorize call will move the instance set members into msh grp temporarily
+            actorize_geometry_transforms(list(moved.keys()), asset, project)
+        except Exception as e:
+            print("Error running actorize in the scene: {}".format(e))
+
+        # Store information about the sets we made and the group(s) we moved
+        instance.data["rig_sets"] = ["all_anim_set", "all_skin_set", "rig_root_grp"]
+        instance.data["moved"] = moved
+        
+
+    def get_staged_output_path(self, instance):
+        """
+            Determine the staged representation output path based on
+            staging directory, instance name, and configured scene type
+        """
         maya_settings = instance.context.data["project_settings"]["maya"]
         ext_mapping = {
             item["name"]: item["value"]
@@ -57,16 +87,29 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
                     break
                 except AttributeError:
                     # no preset found
+                    self.log.warning(f"No scene extension presets found for family: {family}")
                     pass
+
         # Define extract output file path
         dir_path = self.staging_dir(instance)
         filename = "{0}.{1}".format(instance.name, self.scene_type)
-        path = os.path.join(dir_path, filename)
+
+        return os.path.join(dir_path, filename)
+
+
+    def process(self, instance):
+        """Plugin entry point."""
+
+        # Prepare the scene by running pymonk actorize, which will 
+        # reorganize things into groups and create controls
+        self.prepare_scene(instance)
+
+        # Get the output path in the staging directory
+        path = self.get_staged_output_path(instance)
 
         # Perform extraction
         self.log.debug("Performing extraction ...")
         with maintained_selection():
-            #cmds.select(instance, noExpand=True)
             cmds.select(clear=True)
             for name in instance.data.get("rig_sets"):
                 cmds.select(name, add=True, noExpand=True)
@@ -87,15 +130,19 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         representation = {
             'name': self.scene_type,
             'ext': self.scene_type,
-            'files': filename,
-            "stagingDir": dir_path
+            'files': os.path.basename(path),
+            "stagingDir": os.path.dirname(path)
         }
         instance.data["representations"].append(representation)
 
-        # Move stuff back into place and clean up the scene
-        for moved_root in instance.data["moved_roots"]:
-            cmds.parent(moved_root, world=True)
+        # Move the displaced contents of the instance back to wherever they were before
+        for moved, parent in instance.data.get("moved").items():
+            if not parent:
+                cmds.parent(moved, world=True)
+            else:
+                cmds.parent(moved, parent, relative=True)
 
+        # Clean up the rig sets that pymonk created
         for item in instance.data.get("rig_sets"):
             self.remove_from_scene(item)
 

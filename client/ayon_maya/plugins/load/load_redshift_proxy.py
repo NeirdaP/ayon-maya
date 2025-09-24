@@ -146,11 +146,12 @@ class RedshiftProxyLoader(plugin.Loader):
         nodes = [rs_mesh, mesh_shape, group_node]
 
         # determine if we need to enable animation support
-        files_in_folder = os.listdir(os.path.dirname(path))
-        collections, remainder = clique.assemble(files_in_folder)
+        if os.path.exists(path):    # Check added because redshiftproxyrender publish uses a path that doesn't exist yet
+            files_in_folder = os.listdir(os.path.dirname(path))
+            collections, remainder = clique.assemble(files_in_folder)
 
-        if collections:
-            cmds.setAttr("{}.useFrameExtension".format(rs_mesh), 1)
+            if collections:
+                cmds.setAttr("{}.useFrameExtension".format(rs_mesh), 1)
 
         return nodes, group_node
 

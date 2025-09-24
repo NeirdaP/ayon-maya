@@ -15,7 +15,7 @@ from qtpy import QtWidgets
 class LookLoader(ayon_maya.api.plugin.ReferenceLoader):
     """Specific loader for lookdev"""
 
-    product_types = {"look"}
+    product_types = {"look", "lookanim"}
     representations = {"ma"}
 
     label = "Reference look"

@@ -125,7 +125,9 @@ class ReferenceLoader(plugin.ReferenceLoader):
         "skeletalMesh",
         "mvLook",
         "matchmove",
-        "actorbase"
+        "actorbase",
+        "redshiftproxyrender",
+        "proxygpu"
     }
 
     representations = {"ma", "abc", "fbx", "mb"}
