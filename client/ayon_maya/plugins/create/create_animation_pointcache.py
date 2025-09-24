@@ -109,7 +109,7 @@ class CreatePointCache(plugin.MayaCreator):
     identifier = "io.openpype.creators.maya.pointcache"
     label = "Pointcache"
     product_type = "pointcache"
-    icon = "gears"
+    icon = "poo-storm"
     include_user_defined_attributes = False
 
     def read_instance_node(self, node):

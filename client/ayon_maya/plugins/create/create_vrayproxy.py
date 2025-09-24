@@ -11,7 +11,7 @@ class CreateVrayProxy(plugin.MayaCreator):
     identifier = "io.openpype.creators.maya.vrayproxy"
     label = "VRay Proxy"
     product_type = "vrayproxy"
-    icon = "gears"
+    icon = "poo-storm"
 
     vrmesh = True
     alembic = True
