@@ -30,6 +30,7 @@ class ValidateNodeIDsRelated(plugin.MayaInstancePlugin,
     label = 'Node Ids Related (ID)'
     families = ["model",
                 "look",
+                "lookanim",
                 "rig"]
     optional = True
 

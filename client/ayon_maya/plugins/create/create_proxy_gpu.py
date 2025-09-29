@@ -1,7 +1,5 @@
 from maya import cmds
-
 from ayon_maya.api import lib, plugin
-
 from ayon_core.lib import BoolDef
 
 
@@ -73,47 +71,17 @@ def convert_legacy_alembic_creator_attributes(node_data, class_name):
     return node_data
 
 
-class CreateAnimation(plugin.MayaHiddenCreator):
-    """Animation output for character rigs
+class CreateProxyGpu(plugin.MayaCreator):
+    """Creator for alembic proxy gpu cache"""
 
-    We hide the animation creator from the UI since the creation of it is
-    automated upon loading a rig. There's an inventory action to recreate it
-    for loaded rigs if by chance someone deleted the animation instance.
-    """
-
-    identifier = "io.openpype.creators.maya.animation"
-    name = "animationDefault"
-    label = "Animation"
-    product_type = "animation"
-    icon = "male"
-
-    include_parent_hierarchy = False
+    identifier = "io.openpype.creators.maya.proxygpu"
+    label = "Proxy GPU"
+    product_type = "proxygpu"
+    icon = "gears"
     include_user_defined_attributes = False
 
     def read_instance_node(self, node):
-        node_data = super(CreateAnimation, self).read_instance_node(node)
-        node_data = convert_legacy_alembic_creator_attributes(
-            node_data, "ExtractAnimation"
-        )
-        return node_data
-
-    def get_instance_attr_defs(self):
-        return _get_animation_attr_defs(self.create_context,
-                                        self.include_user_defined_attributes,
-                                        self.include_parent_hierarchy)
-
-
-class CreatePointCache(plugin.MayaCreator):
-    """Alembic pointcache for animated data"""
-
-    identifier = "io.openpype.creators.maya.pointcache"
-    label = "Pointcache"
-    product_type = "pointcache"
-    icon = "poo-storm"
-    include_user_defined_attributes = False
-
-    def read_instance_node(self, node):
-        node_data = super(CreatePointCache, self).read_instance_node(node)
+        node_data = super(CreateProxyGpu, self).read_instance_node(node)
         node_data = convert_legacy_alembic_creator_attributes(
             node_data, "ExtractAlembic"
         )
@@ -124,7 +92,7 @@ class CreatePointCache(plugin.MayaCreator):
                                         self.include_user_defined_attributes)
 
     def create(self, product_name, instance_data, pre_create_data):
-        instance = super(CreatePointCache, self).create(
+        instance = super(CreateProxyGpu, self).create(
             product_name, instance_data, pre_create_data
         )
         instance_node = instance.get("instance_node")
