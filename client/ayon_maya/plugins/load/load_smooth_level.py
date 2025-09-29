@@ -16,7 +16,7 @@ class SmoothLevelLoader(Loader):
 
     label = "Import and assign smooth level"
     order = -10
-    icon = "code-fork"
+    icon = "signal"
     color = "orange"
 
     def load(
