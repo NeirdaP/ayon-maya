@@ -8,5 +8,5 @@ project_can_override_addon_version = True
 ayon_server_version = ">=1.1.2"
 ayon_required_addons = {
     "core": ">1.0.3",
-    "jean_moulinette": ">=0.1.0"
+    "jean_moulinette": ">=0.2.0"
 }
