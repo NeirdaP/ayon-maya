@@ -20,6 +20,7 @@ class ValidateNodeIDs(plugin.MayaInstancePlugin):
     label = 'Instance Nodes Have ID'
     families = ["model",
                 "look",
+                "lookanim",
                 "rig",
                 "pointcache",
                 "animation",

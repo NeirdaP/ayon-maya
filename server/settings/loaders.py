@@ -22,6 +22,8 @@ class ColorsSetting(BaseSettingsModel):
         (209, 132, 30, 1.0), title="Model:")
     rig: ColorRGBA_uint8 = SettingsField(
         (59, 226, 235, 1.0), title="Rig:")
+    actorbase: ColorRGBA_uint8 = SettingsField(
+        (59, 226, 235, 1.0), title="Actorbase:")
     pointcache: ColorRGBA_uint8 = SettingsField(
         (94, 209, 30, 1.0), title="Pointcache:")
     animation: ColorRGBA_uint8 = SettingsField(
@@ -250,6 +252,7 @@ DEFAULT_LOADERS_SETTING = {
     "colors": {
         "model": [209, 132, 30, 1.0],
         "rig": [59, 226, 235, 1.0],
+        "actorbase": [59, 226, 235, 1.0],
         "pointcache": [94, 209, 30, 1.0],
         "animation": [94, 209, 30, 1.0],
         "ass": [249, 135, 53, 1.0],

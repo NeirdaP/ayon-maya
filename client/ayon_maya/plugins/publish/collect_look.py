@@ -289,7 +289,7 @@ class CollectLook(plugin.MayaInstancePlugin):
     """
 
     order = pyblish.api.CollectorOrder + 0.2
-    families = ["look"]
+    families = ["look", "lookanim"]
     label = "Collect Look"
 
     def process(self, instance):

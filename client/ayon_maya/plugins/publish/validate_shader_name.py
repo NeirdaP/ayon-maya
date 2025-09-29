@@ -19,7 +19,7 @@ class ValidateShaderName(plugin.MayaInstancePlugin,
     """
     optional = True
     order = ValidateContentsOrder
-    families = ["look"]
+    families = ["look", "lookanim"]
     label = 'Validate Shaders Name'
     actions = [ayon_maya.api.action.SelectInvalidAction]
     regex = r'(?P<asset>.*)_(.*)_SHD'
