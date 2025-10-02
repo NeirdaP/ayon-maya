@@ -77,6 +77,7 @@ class ExtractProxyGPU(plugin.MayaExtractorPlugin):
                     
         # Store the original workfile path, then open a new maya scene
         original_workfile_path = cmds.file(query=True, sceneName=True)            
+        cmds.file(save=True)
         cmds.file(force=True, newFile=True)        
 
         # Get the gpu publish path

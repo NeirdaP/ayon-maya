@@ -44,6 +44,9 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         from ayon_core.pipeline.context_tools import get_current_folder_entity, \
                                                      get_current_project_name
 
+        original_workfile_path = cmds.file(query=True, sceneName=True)
+        cmds.file(save=True)
+
         project = get_current_project_name()
         asset = get_current_folder_entity().get("name")
 
@@ -59,7 +62,9 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
             # Actorize call will move the instance set members into msh grp temporarily
             actorize_geometry_transforms(list(moved.keys()), asset, project)
         except Exception as e:
-            print("Error running actorize in the scene: {}".format(e))
+            self.log.error("Error running actorize in the scene: {}".format(e))
+            cmds.file(original_workfile_path, open=True, force=True)
+            return
 
         # Store information about the sets we made and the group(s) we moved
         instance.data["rig_sets"] = ["all_anim_set", "all_skin_set", "rig_root_grp"]
@@ -103,6 +108,10 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         # Prepare the scene by running pymonk actorize, which will 
         # reorganize things into groups and create controls
         self.prepare_scene(instance)
+
+        if not instance.data.get("rig_sets"):
+            self.log.warning("Actorize did not complete successfully, skipping actorbase extraction")
+            return
 
         # Get the output path in the staging directory
         path = self.get_staged_output_path(instance)
