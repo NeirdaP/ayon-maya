@@ -22,6 +22,7 @@ class ValidateNodeIDs(plugin.MayaInstancePlugin):
                 "look",
                 "lookanim",
                 "rig",
+                "actorbase",
                 "pointcache",
                 "animation",
                 "yetiRig",
