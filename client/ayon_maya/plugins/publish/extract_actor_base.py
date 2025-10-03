@@ -71,7 +71,6 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
                 all_created_nodes.append(rig_set)
                 all_created_nodes.extend(cmds.listRelatives(rig_set, allDescendents=True) or [])
             filtered_nodes = get_id_required_nodes(nodes=all_created_nodes)
-            print("bloop")
 
             # Assign cbids to the new nodes
             for node, id in generate_ids(filtered_nodes):
