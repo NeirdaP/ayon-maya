@@ -109,6 +109,22 @@ def override_toolbox_ui():
 
     controls.append(
         cmds.iconTextButton(
+            "ayon_toolbox_publisher",
+            annotation="Publish",
+            label="Publish",
+            image=resources.get_ayon_icon_filepath(),
+            command=lambda *args: host_tools.show_publisher(
+                parent=parent_widget,
+                tab="publish"
+            ),
+            width=icon_size,
+            height=icon_size,
+            parent=parent
+        )
+    )
+
+    controls.append(
+        cmds.iconTextButton(
             "ayon_toolbox_lookmanager",
             annotation="Look Manager",
             label="Look Manager",
