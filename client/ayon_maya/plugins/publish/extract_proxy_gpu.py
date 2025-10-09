@@ -5,10 +5,15 @@ import os
 from ayon_maya.api import plugin
 from maya import cmds
 
+from pymonk.src.api.run import actorize_geometry_transforms
+from ayon_core.pipeline.context_tools import get_current_folder_entity, \
+                                                get_current_project_name
+
 
 class ExtractProxyGPU(plugin.MayaExtractorPlugin):
     """"""
-
+    import pyblish.api
+    order = pyblish.api.ExtractorOrder + .1     # Plugin runs after extract_gpu_cache
     label = "Proxy GPU (.ma)"
     families = ["proxygpu"]
     targets = ["local", "remote"]
@@ -69,21 +74,45 @@ class ExtractProxyGPU(plugin.MayaExtractorPlugin):
 
         # Lock parenting of the transform and cache
         cmds.lockNode([transform, cache], lock=True)
+        return (root, cache)
 
 
     def process(self, instance):
         """Extractor entry point."""
-        # Open a new maya scene and load up the publish path of the gpu cache
-                    
-        # Store the original workfile path, then open a new maya scene
+
+        # Identify the previously exported gpu cache in instance representations
+        gpu_cache_staged_path = None
+        for representation in instance.data.get("representations") or []:
+            if representation.get("name") == "gpu_cache":
+                gpu_cache_staged_path = os.path.join(representation.get("stagingDir"), representation.get("files"))
+
+        if not gpu_cache_staged_path:
+            self.log.warning("Cannot extract proxy gpu maya scene because cannot locate staged gpu cache! \
+                             Check that the extract_gpu_cache plugin successfully ran.")
+            return
+        
+        # Open a new maya scene and load the staged path of the gpu cache
+        # Store the original workfile path so as not to corrupt workfile versioning
         original_workfile_path = cmds.file(query=True, sceneName=True)            
         cmds.file(force=True, newFile=True)        
 
-        # Get the gpu publish path
-        gpu_cache_publish_path = self.get_gpu_cache_publish_path_from_context(instance)
-
         name = instance.data.get("folderPath").split("/")[-1]
-        self.load_gpu_cache(gpu_cache_publish_path, name, instance.data.get("productName"))
+        root, cache = self.load_gpu_cache(gpu_cache_staged_path, name, instance.data.get("productName"))
+        cmds.refresh()  # Refresh the scene to ensure cache is evaluated before running actorize
+
+        # Run actorize on the gpu cache root that was loaded
+        try:
+            cmds.select(clear=True)
+            actorize_geometry_transforms([root], get_current_folder_entity().get("name"), get_current_project_name())
+        except Exception as e:
+            self.log.error("Unable to extract proxy gpu maya scene due to error running actorize in the scene: {}".format(e))
+            # On actorize error, undo all changes to scene and stop plugin execution
+            cmds.file(original_workfile_path, open=True, force=True)
+            return
+
+        # Change the filepath on the gpu cache to point to the final published path
+        gpu_cache_publish_path = self.get_gpu_cache_publish_path_from_context(instance)
+        cmds.setAttr(cache + '.cacheFileName', gpu_cache_publish_path, type="string")
 
         # Create the .ma representation and store on the instance
         staging_dir = self.staging_dir(instance)
