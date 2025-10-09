@@ -2,7 +2,8 @@
 """Extract rig as Maya Scene."""
 import os
 
-from ayon_maya.api.lib import maintained_selection
+from ayon_maya.api.lib import maintained_selection, set_id, \
+                              generate_ids, get_id_required_nodes
 from ayon_maya.api import plugin
 from maya import cmds
 
@@ -55,14 +56,42 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
             parent = cmds.listRelatives(member, parent=True)
             moved[cmds.ls(member)[0]] = parent[0] if parent else None
         
+        pymonk_rig_sets = ["all_anim_set", "all_skin_set", "rig_root_grp"]
+        rig_selection_sets = []
+
         try:
             # Actorize call will move the instance set members into msh grp temporarily
             actorize_geometry_transforms(list(moved.keys()), asset, project)
+
+            # Place the created mesh group and anim group into appropriate selection sets
+            for child_grp in cmds.listRelatives("rig_root_grp") or []:
+                if child_grp == "msh_grp":
+                    set_name = "{}_out_SET".format(instance.data["productName"])
+                elif child_grp == "anim_grp":
+                    set_name = "{}_controls_SET".format(instance.data["productName"])
+                else:
+                    continue
+                cmds.sets([child_grp], name=set_name)
+                rig_selection_sets.append(set_name)
+
+            # Get all the newly created nodes and filter for the ones that should have cbids
+            all_created_nodes = []
+            for rig_set in pymonk_rig_sets:
+                all_created_nodes.append(rig_set)
+                all_created_nodes.extend(cmds.listRelatives(rig_set, allDescendents=True) or [])
+            all_created_nodes.extend(rig_selection_sets)
+            filtered_nodes = get_id_required_nodes(nodes=all_created_nodes)
+
+            # Assign cbids to the new nodes
+            for node, id in generate_ids(filtered_nodes):
+                set_id(node, id, overwrite=False)
+
         except Exception as e:
-            print("Error running actorize in the scene: {}".format(e))
+            self.log.error("Error running actorize in the scene: {}".format(e))
+            return
 
         # Store information about the sets we made and the group(s) we moved
-        instance.data["rig_sets"] = ["all_anim_set", "all_skin_set", "rig_root_grp"]
+        instance.data["rig_sets"] = pymonk_rig_sets + rig_selection_sets
         instance.data["moved"] = moved
         
 
@@ -103,6 +132,10 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         # Prepare the scene by running pymonk actorize, which will 
         # reorganize things into groups and create controls
         self.prepare_scene(instance)
+
+        if not instance.data.get("rig_sets"):
+            self.log.warning("Actorize did not complete successfully, skipping actorbase extraction")
+            return
 
         # Get the output path in the staging directory
         path = self.get_staged_output_path(instance)
