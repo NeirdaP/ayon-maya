@@ -217,7 +217,7 @@ class ReferenceLoader(plugin.ReferenceLoader):
                 if display_handle:
                     self._set_display_handle(group_name)
 
-            if product_type in ["rig", "actorbase"]:
+            if product_type in ["rig", "actorbase", "proxygpu"]:
                 self._post_process_rig(namespace, context, options)
             else:
                 if "translate" in options:

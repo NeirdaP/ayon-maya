@@ -3,11 +3,8 @@
 from __future__ import annotations
 import os
 from ayon_maya.api import plugin
+from ayon_maya.plugins.publish.extract_actor_base import create_pymonk_rig
 from maya import cmds
-
-from pymonk.src.api.run import actorize_geometry_transforms
-from ayon_core.pipeline.context_tools import get_current_folder_entity, \
-                                                get_current_project_name
 
 
 class ExtractProxyGPU(plugin.MayaExtractorPlugin):
@@ -101,13 +98,11 @@ class ExtractProxyGPU(plugin.MayaExtractorPlugin):
         cmds.refresh()  # Refresh the scene to ensure cache is evaluated before running actorize
 
         # Run actorize on the gpu cache root that was loaded
-        try:
-            cmds.select(clear=True)
-            actorize_geometry_transforms([root], get_current_folder_entity().get("name"), get_current_project_name())
-        except Exception as e:
-            self.log.error("Unable to extract proxy gpu maya scene due to error running actorize in the scene: {}".format(e))
-            # On actorize error, undo all changes to scene and stop plugin execution
-            cmds.file(original_workfile_path, open=True, force=True)
+        # This will also create the needed rig sets and mark everything with cbids
+        created_sets = create_pymonk_rig([root])
+
+        if not created_sets:
+            self.log.warning("Actorize did not complete successfully, skipping proxygpu extraction")
             return
 
         # Change the filepath on the gpu cache to point to the final published path
