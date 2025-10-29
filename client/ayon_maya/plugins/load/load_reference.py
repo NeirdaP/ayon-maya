@@ -218,8 +218,8 @@ class ReferenceLoader(plugin.ReferenceLoader):
                 ).get('display_handle', True)
                 if display_handle:
                     self._set_display_handle(group_name)
-
-            if product_type in ["rig", "actorbase"]:
+            
+            if product_type in ["rig", "actorbase", "proxygpu"]:
                 options["lock_instance"] = (
                     settings
                     ["maya"]
