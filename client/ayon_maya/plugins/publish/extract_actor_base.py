@@ -146,7 +146,6 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
 
         if not instance.data.get("rig_sets"):
             self.log.warning("Actorize did not complete successfully, skipping actorbase extraction")
-            print('cleaning up')
             cmds.undo()     # Undo actorize operations to leave scene clean
             return
 
