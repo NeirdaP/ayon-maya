@@ -90,7 +90,8 @@ class ExtractProxyGPU(plugin.MayaExtractorPlugin):
         
         # Open a new maya scene and load the staged path of the gpu cache
         # Store the original workfile path so as not to corrupt workfile versioning
-        original_workfile_path = cmds.file(query=True, sceneName=True)            
+        original_workfile_path = cmds.file(query=True, sceneName=True)
+        cmds.file(save=True)            
         cmds.file(force=True, newFile=True)        
 
         name = instance.data.get("folderPath").split("/")[-1]
