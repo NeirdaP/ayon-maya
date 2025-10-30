@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """Extract rig as Maya Scene."""
 import os
+import traceback
 
 from ayon_maya.api.lib import maintained_selection, set_id, \
                               generate_ids, get_id_required_nodes, undo_chunk
@@ -9,7 +10,7 @@ from maya import cmds
 
 
 @undo_chunk()
-def create_pymonk_rig(transforms):
+def create_pymonk_rig(transforms, log):
     """
     Run actorize on the given transform(s) and prepare the newly created nodes for use by Ayon
     """
@@ -50,7 +51,8 @@ def create_pymonk_rig(transforms):
             set_id(node, id, overwrite=False)
 
     except Exception as e:
-        print("Error running actorize in the scene: {}".format(e))
+        log.error("Error running actorize in the scene: {}".format(e))
+        log.debug(traceback.format_exc())
         return
 
     return pymonk_rig_sets + rig_selection_sets
@@ -97,7 +99,7 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
             parent = cmds.listRelatives(member, parent=True)
             moved[cmds.ls(member)[0]] = parent[0] if parent else None
         
-        created_sets = create_pymonk_rig(list(moved.keys()))
+        created_sets = create_pymonk_rig(list(moved.keys()), self.log)
 
         # Store information about the sets we made and the group(s) we moved
         instance.data["rig_sets"] = created_sets
@@ -144,6 +146,7 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
 
         if not instance.data.get("rig_sets"):
             self.log.warning("Actorize did not complete successfully, skipping actorbase extraction")
+            print('cleaning up')
             cmds.undo()     # Undo actorize operations to leave scene clean
             return
 

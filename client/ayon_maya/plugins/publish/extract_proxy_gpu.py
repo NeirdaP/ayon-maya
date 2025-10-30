@@ -100,7 +100,7 @@ class ExtractProxyGPU(plugin.MayaExtractorPlugin):
 
         # Run actorize on the gpu cache root that was loaded
         # This will also create the needed rig sets and mark everything with cbids
-        created_sets = create_pymonk_rig([root])
+        created_sets = create_pymonk_rig([root], self.log)
 
         if not created_sets:
             self.log.warning("Actorize did not complete successfully, skipping proxygpu extraction")
