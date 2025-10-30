@@ -4,11 +4,12 @@ import os
 import traceback
 
 from ayon_maya.api.lib import maintained_selection, set_id, \
-                              generate_ids, get_id_required_nodes
+                              generate_ids, get_id_required_nodes, undo_chunk
 from ayon_maya.api import plugin
 from maya import cmds
 
 
+@undo_chunk()
 def create_pymonk_rig(transforms, log):
     """
     Run actorize on the given transform(s) and prepare the newly created nodes for use by Ayon
@@ -145,6 +146,7 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
 
         if not instance.data.get("rig_sets"):
             self.log.warning("Actorize did not complete successfully, skipping actorbase extraction")
+            cmds.undo()     # Undo actorize operations to leave scene clean
             return
 
         # Get the output path in the staging directory
