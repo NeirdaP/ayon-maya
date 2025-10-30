@@ -83,7 +83,8 @@ class ExtractRedshiftProxyRender(plugin.MayaExtractorPlugin):
                     
 
         # Store workfile path, then open a new maya scene to create second representation
-        original_workfile_path = cmds.file(query=True, sceneName=True)            
+        original_workfile_path = cmds.file(query=True, sceneName=True)
+        cmds.file(save=True)             
         cmds.file(force=True, newFile=True)
         
         # Create a redshift proxy and set the filepath to the publish path of the rs representation
