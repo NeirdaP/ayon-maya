@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Smooth level loader."""
 import ayon_maya
-from ayon_maya.api.plugin import Loader
 import json
 from collections import defaultdict
 
 
-class SmoothLevelLoader(Loader):
+class SmoothLevelLoader(ayon_maya.api.plugin.Loader):
     """
     Specific loader for smooth level
     """
