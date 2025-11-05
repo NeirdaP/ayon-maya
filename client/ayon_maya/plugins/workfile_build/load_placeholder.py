@@ -78,7 +78,7 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, PlaceholderLoadMixin):
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
 
-    def _parent_in_hierarchy(self, placeholder, container):
+    def _parent_in_hierarchy(self, placeholder, containers):
         """Parent loaded container to placeholder's parent.
 
         ie : Set loaded content as placeholder's sibling
@@ -87,46 +87,50 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, PlaceholderLoadMixin):
             container (str): Placeholder loaded containers
         """
 
-        if not container:
+        if not containers:
             return
 
         # TODO: This currently returns only a single root but a loaded scene
         #   could technically load more than a single root
-        container_root = get_container_transforms(container, root=True)
+        if not isinstance(containers, list):
+            containers = [containers]
+        
+        for container in containers:
+            container_root = get_container_transforms(container, root=True)
 
-        # Bugfix: The get_container_transforms does not recognize the load
-        # reference group currently
-        # TODO: Remove this when it does
-        parent = get_node_parent(container_root)
-        if parent:
-            container_root = parent
-        roots = [container_root]
+            # Bugfix: The get_container_transforms does not recognize the load
+            # reference group currently
+            # TODO: Remove this when it does
+            parent = get_node_parent(container_root)
+            if parent:
+                container_root = parent
+            roots = [container_root]
 
-        # Add the loaded roots to the holding sets if they exist
-        holding_sets = cmds.listSets(object=placeholder.scene_identifier) or []
-        for holding_set in holding_sets:
-            cmds.sets(roots, forceElement=holding_set)
+            # Add the loaded roots to the holding sets if they exist
+            holding_sets = cmds.listSets(object=placeholder.scene_identifier) or []
+            for holding_set in holding_sets:
+                cmds.sets(roots, forceElement=holding_set)
 
-        # Parent the roots to the place of the placeholder locator and match
-        # its matrix
-        placeholder_form = cmds.xform(
-            placeholder.scene_identifier,
-            query=True,
-            matrix=True,
-            worldSpace=True
-        )
-        scene_parent = get_node_parent(placeholder.scene_identifier)
-        for node in set(roots):
-            cmds.xform(node, matrix=placeholder_form, worldSpace=True)
+            # Parent the roots to the place of the placeholder locator and match
+            # its matrix
+            placeholder_form = cmds.xform(
+                placeholder.scene_identifier,
+                query=True,
+                matrix=True,
+                worldSpace=True
+            )
+            scene_parent = get_node_parent(placeholder.scene_identifier)
+            for node in set(roots):
+                cmds.xform(node, matrix=placeholder_form, worldSpace=True)
 
-            if scene_parent != get_node_parent(node):
-                if scene_parent:
-                    node = cmds.parent(node, scene_parent)[0]
-                else:
-                    node = cmds.parent(node, world=True)[0]
+                if scene_parent != get_node_parent(node):
+                    if scene_parent:
+                        node = cmds.parent(node, scene_parent)[0]
+                    else:
+                        node = cmds.parent(node, world=True)[0]
 
-            # Move loaded nodes in index order next to their placeholder node
-            cmds.reorder(node, back=True)
-            index = get_node_index_under_parent(placeholder.scene_identifier)
-            cmds.reorder(node, front=True)
-            cmds.reorder(node, relative=index + 1)
+                # Move loaded nodes in index order next to their placeholder node
+                cmds.reorder(node, back=True)
+                index = get_node_index_under_parent(placeholder.scene_identifier)
+                cmds.reorder(node, front=True)
+                cmds.reorder(node, relative=index + 1)
