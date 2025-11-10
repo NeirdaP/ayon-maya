@@ -180,6 +180,10 @@ class CreatorsModel(BaseSettingsModel):
         default_factory=CreateLookModel,
         title="Create Look"
     )
+    CreateLookAnim: CreateLookModel = SettingsField(
+        default_factory=CreateLookModel,
+        title="Create Look Anim"
+    )
     CreateMatchmove: BasicCreatorModel = SettingsField(
         default_factory=BasicCreatorModel,
         title="Create Matchmove"
@@ -331,6 +335,13 @@ DEFAULT_CREATORS_SETTINGS = {
     "CreateCameraRig": {"default_variants": ["Main"], "enabled": True},
     "CreateLayout": {"default_variants": ["Main"], "enabled": True},
     "CreateLook": {
+        "default_variants": ["Main"],
+        "enabled": True,
+        "include_texture_reference_objects": False,
+        "make_tx": True,
+        "rs_tex": False,
+    },
+    "CreateLookAnim": {
         "default_variants": ["Main"],
         "enabled": True,
         "include_texture_reference_objects": False,
