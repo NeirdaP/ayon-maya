@@ -102,7 +102,11 @@ class ImagePlaneLoader(plugin.Loader):
         # Get camera from user selection.
         # is_static_image_plane = None
         # is_in_all_views = None
-        camera = data.get("camera") if data else None
+        if data is None:
+            data = {}
+        
+        seek_camera = data.get("seek_camera")
+        camera = data.get("camera")
 
         if not camera:
             cameras = cmds.ls(type="camera")
@@ -113,13 +117,18 @@ class ImagePlaneLoader(plugin.Loader):
                 parent = cmds.listRelatives(camera, parent=True, path=True)[0]
                 camera_names[parent] = camera
 
-            camera_names["Create new camera."] = "create-camera"
-            window = CameraWindow(camera_names.keys())
-            window.exec_()
-            # Skip if no camera was selected (Dialog was closed)
-            if window.camera not in camera_names:
-                return
-            camera = camera_names[window.camera]
+                if seek_camera:
+                    # Use the first camera that isn't one of the defaults 
+                    if parent not in ["front", "top", "side", "persp"]:
+                        break
+            else:
+                camera_names["Create new camera."] = "create-camera"
+                window = CameraWindow(camera_names.keys())
+                window.exec_()
+                # Skip if no camera was selected (Dialog was closed)
+                if window.camera not in camera_names:
+                    return
+                camera = camera_names[window.camera]
 
         if camera == "create-camera":
             camera = cmds.createNode("camera")
@@ -158,7 +167,7 @@ class ImagePlaneLoader(plugin.Loader):
 
         for attr, value in {
             "depth": image_plane_depth,
-            "frameOffset": 0,
+            "frameOffset": data.get("frame_offset") or 0,
             "frameIn": start_frame,
             "frameOut": end_frame,
             "frameCache": end_frame,
