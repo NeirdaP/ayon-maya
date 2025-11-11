@@ -19,6 +19,9 @@ from .workfile_build_settings import ProfilesModel, DEFAULT_WORKFILE_SETTING
 from .templated_workfile_settings import (
     TemplatedProfilesModel, DEFAULT_TEMPLATED_WORKFILE_SETTINGS
 )
+from .publish_hooks_settings import (
+    PublishHooksProfilesModel, DEFAULT_TEMPLATED_WORKFILE_SETTINGS
+)
 
 
 def linear_unit_enum():
@@ -119,6 +122,10 @@ class MayaSettings(BaseSettingsModel):
     templated_workfile_build: TemplatedProfilesModel = SettingsField(
         default_factory=TemplatedProfilesModel,
         title="Templated Workfile Build Settings")
+    publish_hooks: PublishHooksProfilesModel = SettingsField(
+        default_factory=PublishHooksProfilesModel,
+        title="Publish Hooks"
+    )
 
     @validator("ext_mapping")
     def validate_unique_outputs(cls, value):
