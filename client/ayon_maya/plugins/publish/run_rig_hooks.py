@@ -19,7 +19,6 @@ class RunRigHooks(plugin.MayaInstancePlugin):
 
     def process(self, instance):        
         self.log.info("Retrieving rig hooks directory from project settings")
-        curr_task_type = instance.data.get("taskEntity").get("taskType")
         publish_hook_profiles = ayon_api.get_addon_project_settings(
                                         "maya", 
                                         version.__version__, 
@@ -27,6 +26,7 @@ class RunRigHooks(plugin.MayaInstancePlugin):
         self.log.debug(publish_hook_profiles)
 
         rig_hooks_dir = None 
+        curr_task_type = instance.data.get("taskEntity").get("taskType")
         for profile in publish_hook_profiles:
             if curr_task_type in profile.get("task_types"):
                 rig_hooks_dir = profile.get("path")

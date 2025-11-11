@@ -22,6 +22,6 @@ class PublishHooksProfilesModel(BaseSettingsModel):
     )
 
 
-DEFAULT_TEMPLATED_WORKFILE_SETTINGS = {
+DEFAULT_PUBLISH_HOOKS_SETTINGS = {
     "profiles": []
 }

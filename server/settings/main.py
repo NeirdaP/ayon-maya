@@ -20,7 +20,7 @@ from .templated_workfile_settings import (
     TemplatedProfilesModel, DEFAULT_TEMPLATED_WORKFILE_SETTINGS
 )
 from .publish_hooks_settings import (
-    PublishHooksProfilesModel, DEFAULT_TEMPLATED_WORKFILE_SETTINGS
+    PublishHooksProfilesModel, DEFAULT_PUBLISH_HOOKS_SETTINGS
 )
 
 
@@ -178,5 +178,6 @@ DEFAULT_MAYA_SETTING = {
     "publish": DEFAULT_PUBLISH_SETTINGS,
     "load": DEFAULT_LOADERS_SETTING,
     "workfile_build": DEFAULT_WORKFILE_SETTING,
-    "templated_workfile_build": DEFAULT_TEMPLATED_WORKFILE_SETTINGS
+    "templated_workfile_build": DEFAULT_TEMPLATED_WORKFILE_SETTINGS,
+    "publish_hooks": DEFAULT_PUBLISH_HOOKS_SETTINGS
 }
