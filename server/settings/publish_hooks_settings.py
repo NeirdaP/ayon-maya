@@ -15,13 +15,12 @@ class PublishHooksBuildProfilesModel(BaseSettingsModel):
     path: str = SettingsField("", title="Path to hooks folder")
 
 
-class PublishHooksProfilesModel(BaseSettingsModel):
+class PublishHooksModel(BaseSettingsModel):
+    enabled: bool = SettingsField(title="PublishHooks")
+    optional: bool = SettingsField(title="Optional")
+    active: bool = SettingsField(title="Active")
+    families: list[str] = SettingsField(default_factory=list, title="Product Types")
     profiles: list[PublishHooksBuildProfilesModel] = SettingsField(
         default_factory=list,
         title="Profiles"
     )
-
-
-DEFAULT_PUBLISH_HOOKS_SETTINGS = {
-    "profiles": []
-}
