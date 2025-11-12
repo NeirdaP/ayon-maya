@@ -171,5 +171,5 @@ DEFAULT_MAYA_SETTING = {
     "publish": DEFAULT_PUBLISH_SETTINGS,
     "load": DEFAULT_LOADERS_SETTING,
     "workfile_build": DEFAULT_WORKFILE_SETTING,
-    "templated_workfile_build": DEFAULT_TEMPLATED_WORKFILE_SETTINGS
+    "templated_workfile_build": DEFAULT_TEMPLATED_WORKFILE_SETTINGS,
 }
