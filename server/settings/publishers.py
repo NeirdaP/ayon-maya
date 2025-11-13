@@ -10,6 +10,9 @@ from .publish_playblast import (
     ExtractPlayblastSetting,
     DEFAULT_PLAYBLAST_SETTING,
 )
+from .publish_hooks_settings import (
+    PublishHooksModel
+)
 
 
 def up_axis_enum():
@@ -1086,6 +1089,11 @@ class PublishersModel(BaseSettingsModel):
         default_factory=BasicValidateModel,
         title="Extract Skeleton Mesh"
     )
+    RunPublishHooks: PublishHooksModel = SettingsField(
+        default_factory=PublishHooksModel,
+        title="Publish Hooks",
+        section="Other"
+    )
 
 
 DEFAULT_SUFFIX_NAMING = {
@@ -1740,5 +1748,12 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True,
+    },
+    "RunPublishHooks": {
+        "enabled": True,
+        "optional": True,
+        "active": True,
+        "families": [],
+        "profiles": [],
     }
 }
