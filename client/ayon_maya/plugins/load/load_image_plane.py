@@ -91,8 +91,9 @@ class ImagePlaneLoader(plugin.Loader):
 
     def load(self, context, name, namespace, data, options=None):
 
-        image_plane_depth = 1000
-        folder_name = context["folder"]["name"]
+        image_plane_depth = 1
+        folder = context["folder"]
+        folder_name = folder["name"]
         namespace = namespace or unique_namespace(
             folder_name + "_",
             prefix="_" if folder_name[0].isdigit() else "",
@@ -137,9 +138,13 @@ class ImagePlaneLoader(plugin.Loader):
             return
 
         try:
-            cmds.setAttr("{}.displayResolution".format(camera), True)
-            cmds.setAttr("{}.farClipPlane".format(camera),
-                         image_plane_depth * 10)
+            cmds.setAttr(
+                f"{camera}.displayResolution", True
+            )
+            cmds.setAttr(
+                f"{camera}.farClipPlane",
+                image_plane_depth * 10
+            )
         except RuntimeError:
             pass
 
@@ -153,6 +158,7 @@ class ImagePlaneLoader(plugin.Loader):
 
         # Set colorspace
         colorspace = self.get_colorspace(context["representation"])
+
         if colorspace:
             cmds.setAttr(
                 "{}.ignoreColorSpaceFileRules".format(image_plane_shape),
@@ -164,16 +170,21 @@ class ImagePlaneLoader(plugin.Loader):
         # Set offset frame range
         start_frame = cmds.playbackOptions(query=True, min=True)
         end_frame = cmds.playbackOptions(query=True, max=True)
+        clip_in = folder["attrib"]["clipIn"]
+        size_x, size_y = self.get_size_to_fit_resolution_gate(camera)
+        frame_offset = data.get("frame_offset") or clip_in - start_frame
 
         for attr, value in {
             "depth": image_plane_depth,
-            "frameOffset": data.get("frame_offset") or 0,
+            "frameOffset": frame_offset,
             "frameIn": start_frame,
             "frameOut": end_frame,
             "frameCache": end_frame,
-            "useFrameExtension": True
+            "useFrameExtension": True,
+            "sizeX": size_x,
+            "sizeY": size_y
         }.items():
-            plug = "{}.{}".format(image_plane_shape, attr)
+            plug = f"{image_plane_shape}.{attr}"
             cmds.setAttr(plug, value)
 
         movie_representations = {"mov", "preview"}
@@ -215,6 +226,26 @@ class ImagePlaneLoader(plugin.Loader):
             context=context,
             loader=self.__class__.__name__
         )
+
+    def get_size_to_fit_resolution_gate(self, camera):
+
+        # Camera film gate
+        horizontal_aperture = cmds.getAttr(f"{camera}.horizontalFilmAperture")
+        vertical_aperture = cmds.getAttr(f"{camera}.verticalFilmAperture")
+
+        # Render resolution
+        resolution_width = cmds.getAttr("defaultResolution.width")
+        resolution_height = cmds.getAttr("defaultResolution.height")
+
+        # Find visible gate size
+        if horizontal_aperture >= vertical_aperture:
+            size_x = horizontal_aperture
+            size_y = horizontal_aperture * (resolution_height / resolution_width)
+        else:
+            size_x = vertical_aperture * (resolution_width / resolution_height)
+            size_y = vertical_aperture
+
+        return size_x, size_y
 
     def update(self, container, context):
         folder_entity = context["folder"]
