@@ -163,4 +163,3 @@ Temporary Items
 
 # ignore mkdocs build
 site/
-/.run/Ayon.run.xml
