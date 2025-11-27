@@ -4,6 +4,7 @@ from ayon_maya.api.lib import (
     pairwise,
     unique_namespace,
 )
+import qargparse
 from ayon_maya.api.pipeline import containerise
 from ayon_maya.api import plugin
 from maya import cmds
@@ -89,9 +90,25 @@ class ImagePlaneLoader(plugin.Loader):
     icon = "image"
     color = "orange"
 
+    options = [
+        qargparse.Integer(
+            "offset",
+            label="Image plane offset",
+            min=0,
+            max=1000,
+            default=1000,
+            help="Offset distance of the image plane from the camera"
+        ),
+        qargparse.Boolean(
+            "fit_to_resolution_gate",
+            label="Fit to resolution gate",
+            default=False,
+            help="Should the imported image plane fit the resolution gate of the camera?"
+        )
+    ]
+
     def load(self, context, name, namespace, data, options=None):
 
-        image_plane_depth = 1
         folder = context["folder"]
         folder_name = folder["name"]
         namespace = namespace or unique_namespace(
@@ -105,7 +122,8 @@ class ImagePlaneLoader(plugin.Loader):
         # is_in_all_views = None
         if data is None:
             data = {}
-        
+        image_plane_depth = data.get("offset", 1000)
+        fit_to_resolution_gate = data.get("fit_to_resolution_gate", False)
         seek_camera = data.get("seek_camera")
         camera = data.get("camera")
 
@@ -171,8 +189,14 @@ class ImagePlaneLoader(plugin.Loader):
         start_frame = cmds.playbackOptions(query=True, min=True)
         end_frame = cmds.playbackOptions(query=True, max=True)
         clip_in = folder["attrib"]["clipIn"]
-        size_x, size_y = self.get_size_to_fit_resolution_gate(camera)
+
         frame_offset = data.get("frame_offset") or clip_in - start_frame
+
+        # Get image plane sizes
+        size_x, size_y = self.get_default_size(camera)
+
+        if fit_to_resolution_gate:
+            size_x, size_y = self.get_size_to_fit_resolution_gate(camera)
 
         for attr, value in {
             "depth": image_plane_depth,
@@ -226,6 +250,12 @@ class ImagePlaneLoader(plugin.Loader):
             context=context,
             loader=self.__class__.__name__
         )
+
+    def get_default_size(self, camera):
+        horizontal_aperture = cmds.getAttr(f"{camera}.horizontalFilmAperture")
+        vertical_aperture = cmds.getAttr(f"{camera}.verticalFilmAperture")
+
+        return horizontal_aperture, vertical_aperture
 
     def get_size_to_fit_resolution_gate(self, camera):
 
