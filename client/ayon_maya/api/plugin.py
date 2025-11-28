@@ -16,6 +16,7 @@ from ayon_core.pipeline import (
     HiddenCreator,
     LoaderPlugin,
     get_current_project_name,
+    get_representation_path,
     publish,
 )
 from ayon_core.pipeline.create import get_product_name
@@ -795,6 +796,7 @@ class ReferenceLoader(Loader):
         loaded_containers = []
         for c in range(0, count):
             namespace = lib.get_custom_namespace(custom_namespace)
+            namespace = self._override_namespace_from_json(namespace, context)
             group_name = "{}:{}".format(
                 namespace,
                 custom_group_name
@@ -1054,6 +1056,22 @@ class ReferenceLoader(Loader):
             "ma": ["mb"],
             "mb": ["ma"]
         }.get(representation_name, [])
+        
+    def _override_namespace_from_json(self, original_namespace: str, context: dict):
+        try:
+            representations = ayon_api.get_representations(
+                project_name=context["project"]["name"],
+                version_ids={context["version"]["id"]},
+                representation_names={"json"}
+            )
+            json_path = get_representation_path(next(representations))
+            with open(json_path, "r") as file:
+                json_data = json.load(file)
+                namespace = json_data['namespace']
+                self.log.info(f"Found json containing namespace information at {json_path}. Namespace is now {namespace}")
+            return namespace
+        except Exception:
+            return original_namespace
 
 
 class MayaLoader(LoaderPlugin):
