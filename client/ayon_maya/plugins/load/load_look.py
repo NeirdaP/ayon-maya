@@ -34,6 +34,9 @@ class LookLoader(ayon_maya.api.plugin.ReferenceLoader):
                 file_url=self.filepath_from_context(context),
                 project_name=context["project"]["name"]
             )
+            folder_name = context['folder']['name']
+            product_name = context['product']['name']
+            namespace = f"{folder_name}_{product_name}"
             nodes = cmds.file(file_url,
                               namespace=namespace,
                               reference=True,
