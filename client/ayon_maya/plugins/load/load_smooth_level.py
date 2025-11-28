@@ -65,6 +65,7 @@ class SmoothLevelLoader(ayon_maya.api.plugin.Loader):
                         self.log.info(f"Warning: Node '{mesh_name}' with uuid '{mesh_uuid}' was not found in scene")
                         continue
 
+                    cmds.setAttr(f"{mesh_name}.displaySmoothMesh", 2) # Tick the 'Smooth Mesh Preview' checkbox and set the 'Display' to 'Smooth Mesh'
                     attribute = f"{mesh_name}.{smooth_attribute}"
                     try:
                         cmds.setAttr(attribute, attribute_value)
