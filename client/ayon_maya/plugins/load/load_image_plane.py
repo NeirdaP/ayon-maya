@@ -257,8 +257,7 @@ class ImagePlaneLoader(plugin.Loader):
     def get_size_to_fit_resolution_gate(self, camera):
 
         # Camera film gate
-        horizontal_aperture = cmds.getAttr(f"{camera}.horizontalFilmAperture")
-        vertical_aperture = cmds.getAttr(f"{camera}.verticalFilmAperture")
+        horizontal_aperture, vertical_aperture = self.get_default_size(camera)
 
         # Render resolution
         resolution_width = cmds.getAttr("defaultResolution.width")
