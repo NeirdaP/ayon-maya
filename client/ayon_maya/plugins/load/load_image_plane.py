@@ -89,14 +89,13 @@ class ImagePlaneLoader(plugin.Loader):
     extensions = {"mov", "mp4", "exr", "png", "jpg", "jpeg"}
     icon = "image"
     color = "orange"
-
+    default_offset = 1000
     options = [
         qargparse.Integer(
             "offset",
             label="Image plane offset",
             min=0,
-            max=1000,
-            default=1000,
+            default=default_offset,
             help="Offset distance of the image plane from the camera"
         ),
         qargparse.Boolean(
@@ -122,7 +121,7 @@ class ImagePlaneLoader(plugin.Loader):
         # is_in_all_views = None
         if data is None:
             data = {}
-        image_plane_depth = data.get("offset", 1000)
+        image_plane_depth = data.get("offset", self.default_offset)
         fit_to_resolution_gate = data.get("fit_to_resolution_gate", False)
         seek_camera = data.get("seek_camera")
         camera = data.get("camera")
@@ -156,9 +155,7 @@ class ImagePlaneLoader(plugin.Loader):
             return
 
         try:
-            cmds.setAttr(
-                f"{camera}.displayResolution", True
-            )
+            cmds.setAttr(f"{camera}.displayResolution", True)
             cmds.setAttr(
                 f"{camera}.farClipPlane",
                 image_plane_depth * 10
