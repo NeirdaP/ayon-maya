@@ -674,8 +674,9 @@ def on_new():
 
     _remove_workfile_lock()
 
-    import jean_moulinette
-    jean_moulinette.lib.execute_script(get_current_project_name(), "initialize_workfile_from_template")
+    # Invoke jean moulinette to build first workfile if needed
+    cmds.evalDeferred("import jean_moulinette; " \
+    "jean_moulinette.lib.execute_script(get_current_project_name(), 'initialize_workfile_from_template')")
 
 
 def on_task_changed():
