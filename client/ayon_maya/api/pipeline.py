@@ -720,6 +720,11 @@ def on_open():
     check_lock_on_current_file()
 
 
+def execute_initialize_workfile():
+    import jean_moulinette
+    jean_moulinette.lib.execute_script(get_current_project_name(), 'initialize_workfile_from_template')
+
+
 def on_new():
     """Set project resolution and fps when create a new file"""
     log.info("Running callback on new..")
@@ -728,8 +733,8 @@ def on_new():
 
     _remove_workfile_lock()
 
-    import jean_moulinette
-    jean_moulinette.lib.execute_script(get_current_project_name(), "initialize_workfile_from_template")
+    # Invoke jean moulinette to build first workfile if needed
+    cmds.evalDeferred(execute_initialize_workfile)
 
 
 def on_task_changed():

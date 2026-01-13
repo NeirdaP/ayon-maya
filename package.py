@@ -1,6 +1,6 @@
 name = "maya"
 title = "Maya"
-version = "0.4.16+smks-0.8.0"
+version = "0.4.18+smks-0.11.1"
 app_host_name = "maya"
 client_dir = "ayon_maya"
 project_can_override_addon_version = True
@@ -8,4 +8,5 @@ project_can_override_addon_version = True
 ayon_server_version = ">=1.1.2"
 ayon_required_addons = {
     "core": ">1.0.3",
+    "blast_manager": ">=1.0.0"
 }
