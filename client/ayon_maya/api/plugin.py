@@ -27,7 +27,7 @@ from maya.app.renderSetup.model import renderSetup
 from pyblish.api import ContextPlugin, InstancePlugin
 
 from . import lib
-from .lib import imprint, read
+from .lib import imprint, read, unlocked
 from .pipeline import containerise
 
 log = Logger.get_logger()
@@ -270,11 +270,12 @@ class MayaCreatorBase:
             self._add_instance_to_context(created_instance)
 
     def _default_update_instances(self, update_list):
+
         for created_inst, _changes in update_list:
             data = created_inst.data_to_store()
             node = data.get("instance_node")
-
-            self.imprint_instance_node(node, data)
+            with unlocked(node):
+                self.imprint_instance_node(node, data)
 
     @lib.undo_chunk()
     def _default_remove_instances(self, instances):
@@ -287,6 +288,7 @@ class MayaCreatorBase:
         for instance in instances:
             node = instance.data.get("instance_node")
             if node:
+                cmds.lockNode(node, lock=False)
                 cmds.delete(node)
 
             self._remove_instance_from_context(instance)
@@ -322,6 +324,10 @@ class MayaCreator(Creator, MayaCreatorBase):
 
             self.imprint_instance_node(instance_node,
                                        data=instance.data_to_store())
+
+            if pre_create_data.get("lock_instance", False):
+                cmds.lockNode(instance_node, lock=True)
+
             return instance
 
     def collect_instances(self):
@@ -623,12 +629,12 @@ class RenderlayerCreator(Creator, MayaCreatorBase):
             task_type = task_entity["taskType"]
         # creator.product_type != 'render' as expected
         return get_product_name(
-            project_name,
-            task_name,
-            task_type,
-            host_name,
-            self.layer_instance_prefix or self.product_type,
-            variant,
+            project_name=project_name,
+            task_name=task_name,
+            task_type=task_type,
+            host_name=host_name,
+            product_type=self.layer_instance_prefix or self.product_type,
+            variant=variant,
             dynamic_data=dynamic_data,
             project_settings=self.project_settings
         )
@@ -790,6 +796,7 @@ class ReferenceLoader(Loader):
         loaded_containers = []
         for c in range(0, count):
             namespace = lib.get_custom_namespace(custom_namespace)
+            namespace = self._override_namespace_from_json(namespace, context)
             group_name = "{}:{}".format(
                 namespace,
                 custom_group_name
@@ -842,8 +849,7 @@ class ReferenceLoader(Loader):
         project_name = context["project"]["name"]
         repre_entity = context["representation"]
 
-        path = get_representation_path(repre_entity)
-
+        path = self.filepath_from_context(context)
         # Get reference node from container members
         members = get_container_members(node)
         reference_node = lib.get_reference_node(members, self.log)
@@ -997,7 +1003,6 @@ class ReferenceLoader(Loader):
         # Assume asset has been referenced
         members = cmds.sets(node, query=True)
         reference_node = lib.get_reference_node(members, self.log)
-
         assert reference_node, ("Imported container not supported; "
                                 "container must be referenced.")
 
@@ -1009,6 +1014,7 @@ class ReferenceLoader(Loader):
 
         try:
             cmds.delete(node)
+
         except ValueError:
             # Already implicitly deleted by Maya upon removing reference
             pass
@@ -1017,6 +1023,7 @@ class ReferenceLoader(Loader):
             # If container is not automatically cleaned up by May (issue #118)
             cmds.namespace(removeNamespace=namespace,
                            deleteNamespaceContent=True)
+
         except RuntimeError:
             pass
 
@@ -1049,6 +1056,22 @@ class ReferenceLoader(Loader):
             "ma": ["mb"],
             "mb": ["ma"]
         }.get(representation_name, [])
+        
+    def _override_namespace_from_json(self, original_namespace: str, context: dict):
+        try:
+            representations = ayon_api.get_representations(
+                project_name=context["project"]["name"],
+                version_ids={context["version"]["id"]},
+                representation_names={"json"}
+            )
+            json_path = get_representation_path(next(representations))
+            with open(json_path, "r") as file:
+                json_data = json.load(file)
+                namespace = json_data['namespace']
+                self.log.info(f"Found json containing namespace information at {json_path}. Namespace is now {namespace}")
+            return namespace
+        except Exception:
+            return original_namespace
 
 
 class MayaLoader(LoaderPlugin):
