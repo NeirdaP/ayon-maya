@@ -155,10 +155,11 @@ class ImagePlaneLoader(plugin.Loader):
             return
 
         try:
+            image_plane_depth_multiplier = 10
             cmds.setAttr(f"{camera}.displayResolution", True)
             cmds.setAttr(
                 f"{camera}.farClipPlane",
-                image_plane_depth * 10
+                image_plane_depth * image_plane_depth_multiplier
             )
         except RuntimeError:
             pass
