@@ -331,11 +331,18 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
                     version_ids={version_id},
                     representation_names={"json"}
                 )
-                json_path = get_representation_path(next(representations))
-                with open(json_path) as json_file:
-                    data = json.load(json_file)
-                    folder_name = data["input_folders"][0]["name"]
-                    scene_parent = f"{placeholder_parent}|{folder_name}"
+                representation = next(representations, None)
+
+                if representation:
+                    json_path = get_representation_path(representation)
+                    with open(json_path) as json_file:
+                        data = json.load(json_file)
+                        folder_name = data["input_folders"][0]["name"]
+
+                else:
+                    folder_name = context["folder"]["name"]
+
+                scene_parent = f"{placeholder_parent}|{folder_name}"
 
             if not cmds.objExists(scene_parent):
                 name = scene_parent.split("|")[-1]
