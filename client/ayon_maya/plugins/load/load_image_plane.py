@@ -4,6 +4,7 @@ from ayon_maya.api.lib import (
     pairwise,
     unique_namespace,
 )
+import qargparse
 from ayon_maya.api.pipeline import containerise
 from ayon_maya.api import plugin
 from maya import cmds
@@ -88,11 +89,27 @@ class ImagePlaneLoader(plugin.Loader):
     extensions = {"mov", "mp4", "exr", "png", "jpg", "jpeg"}
     icon = "image"
     color = "orange"
+    default_offset = 1000
+    options = [
+        qargparse.Integer(
+            "offset",
+            label="Image plane offset",
+            min=0,
+            default=default_offset,
+            help="Offset distance of the image plane from the camera"
+        ),
+        qargparse.Boolean(
+            "fit_to_resolution_gate",
+            label="Fit to resolution gate",
+            default=False,
+            help="Should the imported image plane fit the resolution gate of the camera?"
+        )
+    ]
 
     def load(self, context, name, namespace, data, options=None):
 
-        image_plane_depth = 1000
-        folder_name = context["folder"]["name"]
+        folder = context["folder"]
+        folder_name = folder["name"]
         namespace = namespace or unique_namespace(
             folder_name + "_",
             prefix="_" if folder_name[0].isdigit() else "",
@@ -104,7 +121,8 @@ class ImagePlaneLoader(plugin.Loader):
         # is_in_all_views = None
         if data is None:
             data = {}
-        
+        image_plane_depth = data.get("offset", self.default_offset)
+        fit_to_resolution_gate = data.get("fit_to_resolution_gate", False)
         seek_camera = data.get("seek_camera")
         camera = data.get("camera")
 
@@ -137,9 +155,12 @@ class ImagePlaneLoader(plugin.Loader):
             return
 
         try:
-            cmds.setAttr("{}.displayResolution".format(camera), True)
-            cmds.setAttr("{}.farClipPlane".format(camera),
-                         image_plane_depth * 10)
+            image_plane_depth_multiplier = 10
+            cmds.setAttr(f"{camera}.displayResolution", True)
+            cmds.setAttr(
+                f"{camera}.farClipPlane",
+                image_plane_depth * image_plane_depth_multiplier
+            )
         except RuntimeError:
             pass
 
@@ -153,6 +174,7 @@ class ImagePlaneLoader(plugin.Loader):
 
         # Set colorspace
         colorspace = self.get_colorspace(context["representation"])
+
         if colorspace:
             cmds.setAttr(
                 "{}.ignoreColorSpaceFileRules".format(image_plane_shape),
@@ -164,16 +186,27 @@ class ImagePlaneLoader(plugin.Loader):
         # Set offset frame range
         start_frame = cmds.playbackOptions(query=True, min=True)
         end_frame = cmds.playbackOptions(query=True, max=True)
+        clip_in = folder["attrib"]["clipIn"]
+
+        frame_offset = data.get("frame_offset") or clip_in - start_frame
+
+        # Get image plane sizes
+        size_x, size_y = self.get_default_size(camera)
+
+        if fit_to_resolution_gate:
+            size_x, size_y = self.get_size_to_fit_resolution_gate(camera)
 
         for attr, value in {
             "depth": image_plane_depth,
-            "frameOffset": data.get("frame_offset") or 0,
+            "frameOffset": frame_offset,
             "frameIn": start_frame,
             "frameOut": end_frame,
             "frameCache": end_frame,
-            "useFrameExtension": True
+            "useFrameExtension": True,
+            "sizeX": size_x,
+            "sizeY": size_y
         }.items():
-            plug = "{}.{}".format(image_plane_shape, attr)
+            plug = f"{image_plane_shape}.{attr}"
             cmds.setAttr(plug, value)
 
         movie_representations = {"mov", "preview"}
@@ -215,6 +248,31 @@ class ImagePlaneLoader(plugin.Loader):
             context=context,
             loader=self.__class__.__name__
         )
+
+    def get_default_size(self, camera):
+        horizontal_aperture = cmds.getAttr(f"{camera}.horizontalFilmAperture")
+        vertical_aperture = cmds.getAttr(f"{camera}.verticalFilmAperture")
+
+        return horizontal_aperture, vertical_aperture
+
+    def get_size_to_fit_resolution_gate(self, camera):
+
+        # Camera film gate
+        horizontal_aperture, vertical_aperture = self.get_default_size(camera)
+
+        # Render resolution
+        resolution_width = cmds.getAttr("defaultResolution.width")
+        resolution_height = cmds.getAttr("defaultResolution.height")
+
+        # Find visible gate size
+        if horizontal_aperture >= vertical_aperture:
+            size_x = horizontal_aperture
+            size_y = horizontal_aperture * (resolution_height / resolution_width)
+        else:
+            size_x = vertical_aperture * (resolution_width / resolution_height)
+            size_y = vertical_aperture
+
+        return size_x, size_y
 
     def update(self, container, context):
         folder_entity = context["folder"]

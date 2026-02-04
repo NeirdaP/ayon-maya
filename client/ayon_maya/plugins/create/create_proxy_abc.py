@@ -15,6 +15,7 @@ class CreateProxyAlembic(plugin.MayaCreator):
     label = "Proxy Alembic"
     product_type = "proxyAbc"
     icon = "poo-storm"
+    product_base_type = "proxyAbc"
     write_color_sets = False
     write_face_sets = False
 
