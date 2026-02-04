@@ -25,8 +25,7 @@ class ValidateNodeIDs(plugin.MayaInstancePlugin):
                 "actorbase",
                 "pointcache",
                 "animation",
-                "yetiRig",
-                "assembly"]
+                "yetiRig"]
 
     actions = [ayon_maya.api.action.SelectInvalidAction,
                ayon_maya.api.action.GenerateUUIDsOnInvalidAction]
