@@ -1,7 +1,8 @@
+import json
+from enum import Enum
+
 from maya import cmds
 import ayon_api
-import json
-
 from ayon_core.pipeline.workfile.workfile_template_builder import (
     PlaceholderLoadMixin,
     LoadPlaceholderItem,
@@ -17,7 +18,6 @@ from ayon_maya.api.lib import (
 from ayon_maya.api.workfile_template_builder import (
     MayaPlaceholderPlugin,
 )
-from enum import Enum
 
 
 class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
