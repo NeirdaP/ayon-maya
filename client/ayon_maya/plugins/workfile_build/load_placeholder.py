@@ -22,18 +22,9 @@ from ayon_maya.api.workfile_template_builder import (
 
 class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
     def get_load_plugin_options(self, options=None):
-        """Unified attribute definitions for load placeholder.
-
-        Common function for placeholder plugins used for loading of
-        representations. Use it in 'get_placeholder_options'.
-
-        Args:
-            options (Dict[str, Any]): Already available options which are used
-                as defaults for attributes.
-
-        Returns:
-            List[AbstractAttrDef]: Attribute definitions common for load
-                plugins.
+        """
+        Override of ayon_core's PlaceholderLoadMixin to add custom attributes
+        For now we add the attribute "group_mode"
         """
 
         group_modes_labels = [group_mode.fullname for group_mode in list(GroupMode)]
@@ -182,6 +173,9 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
             version_id = representation["versionId"]
 
             if group_mode == GroupMode.Folders.fullname:
+                # Content will be parented under a group with the name of the parent's folder
+                # First we check if a json representation exists next to the current one
+                # if so, we get the folder name from this json instead of the current context
                 representations = ayon_api.get_representations(
                     project_name=context["project"]["name"],
                     version_ids={version_id},
