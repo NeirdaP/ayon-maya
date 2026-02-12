@@ -28,7 +28,7 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
         """
 
         group_modes_labels = [group_mode.fullname for group_mode in list(GroupMode)]
-
+        options = options or {}
         result = super().get_load_plugin_options(options)
         attributes_list = []
         for attribute in result:
@@ -43,9 +43,9 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
                             "Group Mode"
                             "\nDefines how imported products will "
                             "be placed in hierarchy\n"
-                            f"{GroupMode.Placeholder.fullname}: Places content at the placeholder's level, "
+                            f"{GroupMode.PLACEHOLDER.fullname}: Places content at the placeholder's level, "
                             f"no additional grouping\n"
-                            f"{GroupMode.Folders.fullname}: Groups products coming from same asset "
+                            f"{GroupMode.FOLDER.fullname}: Groups products coming from same asset "
                             f"under a group with folder's name"
                         )
                     )
@@ -119,13 +119,54 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
     def load_succeed(self, placeholder, container):
         self._parent_in_hierarchy(placeholder, container)
 
+    def get_scene_parent(self, container, placeholder):
+        group_mode = placeholder.data.get("group_mode")
+        container_representation_id = cmds.getAttr(f"{container}.representation")
+        project_name = context_tools.get_current_project_name()
+
+        representation = ayon_api.get_representation_by_id(
+            project_name=project_name,
+            representation_id=container_representation_id
+        )
+
+        context = representation["context"]
+
+        placeholder_parent = get_node_parent(placeholder.scene_identifier)
+        scene_parent = placeholder_parent
+        version_id = representation["versionId"]
+
+        if group_mode == GroupMode.FOLDER.fullname:
+            # Content will be parented under a group with the name of the parent's folder
+            # First we check if a json representation exists next to the current one
+            # if so, we get the folder name from this json instead of the current context
+            representations = ayon_api.get_representations(
+                project_name=context["project"]["name"],
+                version_ids={version_id},
+                representation_names={"json"}
+            )
+            representation = next(representations, None)
+
+            if representation:
+                json_path = get_representation_path(representation)
+                with open(json_path) as json_file:
+                    data = json.load(json_file)
+                    folder_name = data["input_folders"][0]["name"]
+
+            else:
+                folder_name = context["folder"]["name"]
+
+            scene_parent = f"{placeholder_parent}|{folder_name}"
+
+        return scene_parent
+
     def _parent_in_hierarchy(self, placeholder, containers):
         """Parent loaded container to placeholder's parent.
 
         ie : Set loaded content as placeholder's sibling
-
+        Adds a folder group to the imported content depending on the group_mode value (see GroupMode class)
         Args:
-            container (str): Placeholder loaded containers
+            placeholder (MayaPlaceholderPlugin): Placeholder object
+            containers (str): Placeholder loaded containers
         """
 
         if not containers:
@@ -136,17 +177,9 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
         if not isinstance(containers, list):
             containers = [containers]
 
-        group_mode = placeholder.data.get("group_mode")
         for container in containers:
-            container_representation_id = cmds.getAttr(f"{container}.representation")
-            project_name = context_tools.get_current_project_name()
-            representation = ayon_api.get_representation_by_id(
-                project_name=project_name,
-                representation_id=container_representation_id
-            )
 
-            context = representation["context"]
-
+            scene_parent = self.get_scene_parent(container, placeholder)
             container_root = get_container_transforms(container, root=True)
             # Bugfix: The get_container_transforms does not recognize the load
             # reference group currently
@@ -168,34 +201,10 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
                 matrix=True,
                 worldSpace=True
             )
-            placeholder_parent = get_node_parent(placeholder.scene_identifier)
-            scene_parent = placeholder_parent
-            version_id = representation["versionId"]
-
-            if group_mode == GroupMode.Folders.fullname:
-                # Content will be parented under a group with the name of the parent's folder
-                # First we check if a json representation exists next to the current one
-                # if so, we get the folder name from this json instead of the current context
-                representations = ayon_api.get_representations(
-                    project_name=context["project"]["name"],
-                    version_ids={version_id},
-                    representation_names={"json"}
-                )
-                representation = next(representations, None)
-
-                if representation:
-                    json_path = get_representation_path(representation)
-                    with open(json_path) as json_file:
-                        data = json.load(json_file)
-                        folder_name = data["input_folders"][0]["name"]
-
-                else:
-                    folder_name = context["folder"]["name"]
-
-                scene_parent = f"{placeholder_parent}|{folder_name}"
 
             if not cmds.objExists(scene_parent):
                 name = scene_parent.split("|")[-1]
+                placeholder_parent = get_node_parent(placeholder.scene_identifier)
                 cmds.group(name=name, parent=placeholder_parent, empty=True)
 
             for node in set(roots):
@@ -215,8 +224,8 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
 
 
 class GroupMode(Enum):
-    Placeholder = "Placeholder level"
-    Folders = "Group products from same folder"
+    PLACEHOLDER = "Placeholder level"
+    FOLDER = "Group products from same folder"
 
     def __new__(cls, value):
         member = object.__new__(cls)
