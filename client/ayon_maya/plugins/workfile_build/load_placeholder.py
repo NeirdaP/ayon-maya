@@ -23,36 +23,32 @@ from ayon_maya.api.workfile_template_builder import (
 class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
     def get_load_plugin_options(self, options=None):
         """
-        Override of ayon_core's PlaceholderLoadMixin to add custom attributes
-        For now we add the attribute "group_mode"
+        Override of ayon_core's PlaceholderLoadMixin to add custom options
+        For now we only add the option "group_mode"
         """
-
         group_modes_labels = [group_mode.fullname for group_mode in list(GroupMode)]
-        options = options or {}
-        result = super().get_load_plugin_options(options)
-        attributes_list = []
-        for attribute in result:
-            if attribute.label == "Loader":
-                attributes_list.append(
-                    attribute_definitions.EnumDef(
-                        "group_mode",
-                        label="Group mode",
-                        default=options.get("group_mode"),
-                        items=group_modes_labels,
-                        tooltip=(
-                            "Group Mode"
-                            "\nDefines how imported products will "
-                            "be placed in hierarchy\n"
-                            f"{GroupMode.PLACEHOLDER.fullname}: Places content at the placeholder's level, "
-                            f"no additional grouping\n"
-                            f"{GroupMode.FOLDER.fullname}: Groups products coming from same asset "
-                            f"under a group with folder's name"
-                        )
-                    )
-                )
-            attributes_list.append(attribute)
 
-        return attributes_list
+        inherited_options = super().get_load_plugin_options(options)
+        loader_option = [option for option in inherited_options if option.label == "Loader"][0]
+        loader_option_index = inherited_options.index(loader_option)
+        inherited_options.insert(
+            loader_option_index + 1,  # Add 'group_mode' option exactly after the 'loader' option
+            attribute_definitions.EnumDef(
+                "group_mode",
+                label="Group mode",
+                items=group_modes_labels,
+                tooltip=(
+                    "Group Mode"
+                    "\nDefines how imported products will "
+                    "be placed in hierarchy\n"
+                    f"{GroupMode.PLACEHOLDER.fullname}: Places content at the placeholder's level, "
+                    f"no additional grouping\n"
+                    f"{GroupMode.FOLDER.fullname}: Groups products coming from same asset "
+                    f"under a group with folder's name"
+                )
+            )
+        )
+        return inherited_options
 
 
 class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin):
