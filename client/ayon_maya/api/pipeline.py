@@ -90,6 +90,60 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             app_version=version,
         )
 
+    def update_scene_from_casting(self):
+        import ayon_api
+        from ayon_maya.api.workfile_template_builder import MayaTemplateBuilder
+
+        context = self.get_current_context()
+        project = context.get("project_name")
+        folder = ayon_api.get_folder_by_path(project, context.get("folder_path"))
+
+        # Update the template first. This will add new items as needed
+        builder = MayaTemplateBuilder(self)
+        builder.rebuild_template()
+
+        # Create casting dictionary based off ayon db
+        casting_instances = {}
+        breakdown_links = list(ayon_api.get_folder_links(project_name=project, folder_id=folder.get("id"), link_types=["breakdown"], link_direction="in"))
+        for link in breakdown_links:
+            entity_id = link.get("entityId")
+            if entity_id not in casting_instances:
+                casting_instances[entity_id] = 1
+            else:
+                casting_instances[entity_id] += 1
+
+        # Get the scene containers information as dict        
+        folder_id_to_containers = {}
+        containers = list(self.get_containers())
+        for container in containers:
+            representation = ayon_api.get_representation_by_id(project_name=project, representation_id=container.get("representation"))
+            repre_folder = ayon_api.get_folder_by_path(project_name=project, folder_path=representation.get("context").get("folder").get("path"))
+            container["folder_name"] = repre_folder.get("name")
+
+            if repre_folder.get("id") not in folder_id_to_containers:
+                folder_id_to_containers[repre_folder.get("id")] = [container]
+            else:
+                folder_id_to_containers[repre_folder.get("id")].append(container)
+        
+        # Compare the two dicts to see if we have extra assets in the scene not in the casting
+        # Optional: might try to remove these from the scene in the future  
+        extra_assets = []
+        for folder_id,containers_list in folder_id_to_containers.items():
+            asset_name = containers_list[0].get("folder_name")
+            number_cast = casting_instances.get(folder_id)
+
+            if number_cast is None or number_cast < len(containers_list):
+                extra_assets.append(asset_name)
+
+        # Notify user of extra assets in the scene
+        if extra_assets:
+            msg = "The following assets have more instances in the scene than are noted in the casting. \
+                    Check these assets and clean the scene as needed:\n\n"
+            for asset in extra_assets:
+                msg += f"{asset}\n"
+            cmds.confirmDialog(title="Extra Assets in Scene", message=msg)
+            
+
     def install(self):
         project_name = get_current_project_name()
         project_settings = get_project_settings(project_name)
@@ -289,7 +343,15 @@ def _set_project():
         else:
             raise
 
-    cmds.workspace(workdir, openWorkspace=True)
+    try:
+        cmds.workspace(workdir, openWorkspace=True)
+    except RuntimeError:
+        # Allow to pass through with an error log in case `workspace.mel`
+        # may have been invalid or setting workspace fails for some other
+        # reason.
+        log.error(
+            "Failed to set Maya workspace to '%s': %s", workdir, exc_info=True
+        )
 
 
 def _on_maya_initialized(*args):

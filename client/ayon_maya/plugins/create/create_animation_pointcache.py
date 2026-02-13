@@ -85,6 +85,7 @@ class CreateAnimation(plugin.MayaHiddenCreator):
     name = "animationDefault"
     label = "Animation"
     product_type = "animation"
+    product_base_type = "animation"
     icon = "male"
 
     include_parent_hierarchy = False
@@ -110,6 +111,7 @@ class CreatePointCache(plugin.MayaCreator):
     label = "Pointcache"
     product_type = "pointcache"
     icon = "poo-storm"
+    product_base_type = "pointcache"
     include_user_defined_attributes = False
 
     def read_instance_node(self, node):

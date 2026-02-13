@@ -1,3 +1,4 @@
+from __future__ import annotations
 import json
 from enum import Enum
 
@@ -12,6 +13,7 @@ from ayon_core.lib import attribute_definitions
 
 from ayon_maya.api.lib import (
     get_container_transforms,
+    get_highest_in_hierarchy,
     get_node_parent,
     get_node_index_under_parent
 )
