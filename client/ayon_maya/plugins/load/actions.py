@@ -102,6 +102,7 @@ class ImportMayaLoader(ayon_maya.api.plugin.Loader):
         "animation",
         "mayaAscii",
         "mayaScene",
+        "mayascene",
         "setdress",
         "layout",
         "camera",
