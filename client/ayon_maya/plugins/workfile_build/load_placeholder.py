@@ -200,7 +200,7 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
                 worldSpace=True
             )
 
-            if not scene_parent or not cmds.objExists(scene_parent):
+            if scene_parent and not cmds.objExists(scene_parent):
                 name = scene_parent.split("|")[-1]
                 placeholder_parent = get_node_parent(placeholder.scene_identifier)
                 cmds.group(name=name, parent=placeholder_parent, empty=True)
