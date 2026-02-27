@@ -8,4 +8,5 @@ class CreateLookAnim(create_look.CreateLook):
     identifier = "io.openpype.creators.maya.lookanim"
     label = "Look Anim"
     product_type = "lookanim"
+    product_base_type = "lookanim"
     icon = "paint-brush"
