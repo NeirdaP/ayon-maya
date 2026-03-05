@@ -6,5 +6,6 @@ class CreateActorBase(plugin.MayaCreator):
 
     identifier = "io.openpype.creators.maya.actorbase"
     label = "Actor Base"
-    product_type = "actorbase"
+    product_base_type = "actorbase"
+    product_type = product_base_type
     icon = "wheelchair"

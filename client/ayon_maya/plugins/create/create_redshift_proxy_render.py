@@ -8,5 +8,6 @@ class CreateRedshiftProxyRender(plugin.MayaCreator):
 
     identifier = "io.openpype.creators.maya.redshiftproxyrender"
     label = "Redshift Proxy Render"
-    product_type = "redshiftproxyrender"
+    product_base_type = "redshiftproxyrender"
+    product_type = product_base_type
     icon = "gears"
