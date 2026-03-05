@@ -76,7 +76,8 @@ class CreateProxyGpu(plugin.MayaCreator):
 
     identifier = "io.openpype.creators.maya.proxygpu"
     label = "Proxy GPU"
-    product_type = "proxygpu"
+    product_base_type = "proxygpu"
+    product_type = product_base_type
     icon = "gears"
     include_user_defined_attributes = False
 

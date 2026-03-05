@@ -180,9 +180,9 @@ class ValidateFrameRangeModel(BaseSettingsModel):
     enabled: bool = SettingsField(title="ValidateFrameRange")
     optional: bool = SettingsField(title="Optional")
     active: bool = SettingsField(title="Active")
-    exclude_product_types: list[str] = SettingsField(
+    exclude_product_base_types: list[str] = SettingsField(
         default_factory=list,
-        title="Exclude product types"
+        title="Exclude product base types"
     )
 
 
@@ -317,12 +317,6 @@ class ValidateRenderSettingsModel(BaseSettingsModel):
         default_factory=list, title="Redshift Render Attributes")
     renderman_render_attributes: list[RendererAttributesModel] = SettingsField(
         default_factory=list, title="Renderman Render Attributes")
-
-
-class BasicValidateModel(BaseSettingsModel):
-    enabled: bool = SettingsField(title="Enabled")
-    optional: bool = SettingsField(title="Optional")
-    active: bool = SettingsField(title="Active")
 
 
 class ValidateCameraContentsModel(BaseSettingsModel):
@@ -1025,7 +1019,7 @@ class PublishersModel(BaseSettingsModel):
         default_factory=BasicValidateModel,
         title="Validate Animation Out Set Related Node Ids",
     )
-    ValidateAnimationProductTypePublish: BasicValidateModel = SettingsField(
+    ValidateAnimationProductBaseTypePublish: BasicValidateModel = SettingsField(
         default_factory=BasicValidateModel,
         title="Validate Animation Product Type Publish",
     )
@@ -1210,7 +1204,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "enabled": True,
         "optional": True,
         "active": True,
-        "exclude_product_types": [
+        "exclude_product_base_types": [
             "model",
             "rig",
             "staticMesh"
@@ -1592,7 +1586,7 @@ DEFAULT_PUBLISH_SETTINGS = {
         "optional": False,
         "active": True
     },
-    "ValidateAnimationProductTypePublish": {
+    "ValidateAnimationProductBaseTypePublish": {
         "enabled": True,
         "optional": False,
         "active": True
