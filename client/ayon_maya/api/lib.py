@@ -2385,7 +2385,7 @@ def get_node_parent(node):
         node (str): The node path of the node to get the parent for.
 
     Returns:
-        str | None: The full path name of the parent node or None.
+        str | None: The full path name of the parent node or None if no parent.
 
     """
     parents = cmds.listRelatives(node, parent=True, fullPath=True)
