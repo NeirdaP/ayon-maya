@@ -39,6 +39,7 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
                 "group_mode",
                 label="Group mode",
                 items=group_modes_labels,
+                default=options.get("group_mode") if options else None,
                 tooltip=(
                     "Group Mode"
                     "\nDefines how imported products will "
@@ -155,7 +156,9 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
             else:
                 folder_name = context["folder"]["name"]
 
-            scene_parent = f"{placeholder_parent}|{folder_name}"
+            scene_parent = f"{folder_name}"
+            if placeholder_parent:
+                scene_parent = f"{placeholder_parent}|{scene_parent}"
 
         return scene_parent
 
@@ -205,7 +208,11 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
             if scene_parent and not cmds.objExists(scene_parent):
                 name = scene_parent.split("|")[-1]
                 placeholder_parent = get_node_parent(placeholder.scene_identifier)
-                cmds.group(name=name, parent=placeholder_parent, empty=True)
+                
+                if placeholder_parent:
+                    cmds.group(name=name, parent=placeholder_parent, empty=True)
+                else:
+                    cmds.group(name=name, empty=True)
 
             for node in set(roots):
                 cmds.xform(node, matrix=placeholder_form, worldSpace=True)
