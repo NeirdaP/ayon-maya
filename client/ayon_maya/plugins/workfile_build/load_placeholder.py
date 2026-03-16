@@ -28,11 +28,15 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
         Override of ayon_core's PlaceholderLoadMixin to add custom options
         For now we only add the option "group_mode"
         """
+        options = options or {}
+
         group_modes_labels = [group_mode.fullname for group_mode in list(GroupMode)]
 
         inherited_options = super().get_load_plugin_options(options)
         loader_option = [option for option in inherited_options if option.label == "Loader"][0]
+        folder_filter_option = [option for option in inherited_options if option.label == "Folder filter"][0]
         loader_option_index = inherited_options.index(loader_option)
+        folder_filter_index = inherited_options.index(folder_filter_option)
         inherited_options.insert(
             loader_option_index + 1,  # Add 'group_mode' option exactly after the 'loader' option
             attribute_definitions.EnumDef(
@@ -51,7 +55,51 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
                 )
             )
         )
+
+        inherited_options.insert(
+            folder_filter_index + 1,  # Add 'folder_type_filter' option exactly after the 'folder_filter' option
+            attribute_definitions.TextDef(
+                "folder_type_filter",
+                label="Folder type filter",
+                default=options.get("folder_type_filter"),
+                placeholder="Character, Prop..."
+            )
+        )
         return inherited_options
+
+    def _get_representations(self, placeholder):
+        """
+        Override to apply the product type filter on representations
+        For now, the product type filter only works if the representation
+        has the related custom json representation to retrieve its original folder
+        """
+
+        representations = super()._get_representations(placeholder)
+
+        filtered_representations = []
+        folder_type_filter = placeholder.data.get("folder_type_filter", "")
+        folder_type_filter_list = folder_type_filter.strip().split(",")
+
+        if folder_type_filter_list:
+            for representation in representations:
+                folder_type = representation["context"]["folder"]["type"]
+                related_json_path = get_related_json_representation_path(representation)
+                if related_json_path:
+                    with open(related_json_path) as json_file:
+                        data = json.load(json_file)
+                        try:
+                            project_name = representation["context"]["project"]["name"]
+                            folder_id = data["input_folders"][0]["id"]
+                            folder = ayon_api.get_folder_by_id(project_name, folder_id)
+                            folder_type = folder["folderType"]
+                        except KeyError as e:
+                            print(e)
+
+                if folder_type in folder_type_filter_list:
+                    filtered_representations.append(representation)
+        else:
+            filtered_representations = representations
+        return filtered_representations
 
 
 class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin):
@@ -134,22 +182,15 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
 
         placeholder_parent = get_node_parent(placeholder.scene_identifier)
         scene_parent = placeholder_parent
-        version_id = representation["versionId"]
 
         if group_mode == GroupMode.FOLDER.fullname:
             # Content will be parented under a group with the name of the parent's folder
             # First we check if a json representation exists next to the current one
             # if so, we get the folder name from this json instead of the current context
-            representations = ayon_api.get_representations(
-                project_name=context["project"]["name"],
-                version_ids={version_id},
-                representation_names={"json"}
-            )
-            representation = next(representations, None)
+            representation_path = get_related_json_representation_path(representation)
 
-            if representation:
-                json_path = get_representation_path(representation)
-                with open(json_path) as json_file:
+            if representation_path:
+                with open(representation_path) as json_file:
                     data = json.load(json_file)
                     folder_name = data["input_folders"][0]["name"]
 
@@ -239,3 +280,18 @@ class GroupMode(Enum):
         member._value_ = value
         member.fullname = value
         return member
+
+
+def get_related_json_representation_path(representation):
+    context = representation["context"]
+    version_id = representation["versionId"]
+    project_name = context["project"]["name"]
+    representations = ayon_api.get_representations(
+        project_name=project_name,
+        version_ids={version_id},
+        representation_names={"json"}
+    )
+
+    representation = next(representations, None)
+    if representation:
+        return get_representation_path(representation)
