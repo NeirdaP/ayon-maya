@@ -57,7 +57,7 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
         )
 
         inherited_options.insert(
-            folder_filter_index + 1,
+            folder_filter_index + 1,  # Add 'folder_type_filter' option exactly after the 'folder_filter' option
             attribute_definitions.TextDef(
                 "folder_type_filter",
                 label="Folder type filter",
