@@ -1,5 +1,4 @@
 from __future__ import annotations
-import json
 from enum import Enum
 
 from maya import cmds
@@ -19,6 +18,10 @@ from ayon_maya.api.lib import (
 )
 from ayon_maya.api.workfile_template_builder import (
     MayaPlaceholderPlugin,
+)
+from ayon_maya.plugins.publish.collect_additional_animation_data import (
+    ADDITIONAL_ANIMATION_DATA_KEY,
+    FOLDER_NAME_KEY,
 )
 
 
@@ -70,12 +73,12 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
     def _get_representations(self, placeholder):
         """
         Override to apply the product type filter on representations
-        For now, the product type filter only works if the representation
-        has the related custom json representation to retrieve its original folder
         """
-
+        from ayon_maya.plugins.publish.collect_additional_animation_data import (
+            ADDITIONAL_ANIMATION_DATA_KEY,
+            FOLDER_TYPE_KEY
+        )
         representations = super()._get_representations(placeholder)
-
         filtered_representations = []
         folder_type_filter = placeholder.data.get("folder_type_filter", "")
         folder_type_filter_list = folder_type_filter.strip().split(",")
@@ -83,17 +86,8 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
         if folder_type_filter_list:
             for representation in representations:
                 folder_type = representation["context"]["folder"]["type"]
-                related_json_path = get_related_json_representation_path(representation)
-                if related_json_path:
-                    with open(related_json_path) as json_file:
-                        data = json.load(json_file)
-                        try:
-                            project_name = representation["context"]["project"]["name"]
-                            folder_id = data["input_folders"][0]["id"]
-                            folder = ayon_api.get_folder_by_id(project_name, folder_id)
-                            folder_type = folder["folderType"]
-                        except KeyError as e:
-                            print(e)
+                if representation["data"].get(ADDITIONAL_ANIMATION_DATA_KEY):
+                    folder_type = representation["data"][ADDITIONAL_ANIMATION_DATA_KEY][FOLDER_TYPE_KEY]
 
                 if folder_type in folder_type_filter_list:
                     filtered_representations.append(representation)
@@ -185,14 +179,8 @@ class MayaPlaceholderLoadPlugin(MayaPlaceholderPlugin, MayaPlaceholderLoadMixin)
 
         if group_mode == GroupMode.FOLDER.fullname:
             # Content will be parented under a group with the name of the parent's folder
-            # First we check if a json representation exists next to the current one
-            # if so, we get the folder name from this json instead of the current context
-            representation_path = get_related_json_representation_path(representation)
-
-            if representation_path:
-                with open(representation_path) as json_file:
-                    data = json.load(json_file)
-                    folder_name = data["input_folders"][0]["name"]
+            if representation["data"].get(ADDITIONAL_ANIMATION_DATA_KEY):
+                folder_name = representation["data"][ADDITIONAL_ANIMATION_DATA_KEY][FOLDER_NAME_KEY]
 
             else:
                 folder_name = context["folder"]["name"]
@@ -280,18 +268,3 @@ class GroupMode(Enum):
         member._value_ = value
         member.fullname = value
         return member
-
-
-def get_related_json_representation_path(representation):
-    context = representation["context"]
-    version_id = representation["versionId"]
-    project_name = context["project"]["name"]
-    representations = ayon_api.get_representations(
-        project_name=project_name,
-        version_ids={version_id},
-        representation_names={"json"}
-    )
-
-    representation = next(representations, None)
-    if representation:
-        return get_representation_path(representation)
