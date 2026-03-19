@@ -9,7 +9,8 @@ ayon_server_version = ">=1.1.2"
 ayon_required_addons = {
     "core": ">1.8.0",
     "jean_moulinette": ">=0.2.0",
-    "blast_manager": ">=1.0.0"
+    "blast_manager": ">=1.0.0",
+    "pymonk": ">=16.0.0"
 }
 ayon_compatible_addons = {
     "deadline": ">=0.7.0",
