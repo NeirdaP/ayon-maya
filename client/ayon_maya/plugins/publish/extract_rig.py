@@ -41,7 +41,7 @@ class ExtractRig(plugin.MayaExtractorPlugin):
         # Perform extraction
         self.log.debug("Performing extraction ...")
         with maintained_selection():
-            cmds.select(instance, noExpand=True)
+            cmds.select(instance.name, noExpand=True)
             cmds.file(path,
                       force=True,
                       typ="mayaAscii" if self.scene_type == "ma" else "mayaBinary",  # noqa: E501
