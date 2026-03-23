@@ -78,9 +78,8 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
 
         filtered_representations = []
         folder_type_filter = placeholder.data.get("folder_type_filter", "")
-        folder_type_filter_list = folder_type_filter.strip().split(",")
-
-        if folder_type_filter_list:
+        if folder_type_filter:
+            folder_type_filter_list = folder_type_filter.strip().split(",")
             for representation in representations:
                 folder_type = representation["context"]["folder"]["type"]
                 related_json_path = get_related_json_representation_path(representation)
