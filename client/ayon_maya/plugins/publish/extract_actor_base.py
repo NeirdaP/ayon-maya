@@ -8,6 +8,8 @@ from ayon_maya.api.lib import maintained_selection, set_id, \
 from ayon_maya.api import plugin
 from maya import cmds
 
+from ayon_core.pipeline.publish import PublishError
+
 
 @undo_chunk()
 def create_pymonk_rig(transforms, log):
@@ -147,9 +149,8 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         self.prepare_scene(instance)
 
         if not instance.data.get("rig_sets"):
-            self.log.warning("Actorize did not complete successfully, skipping actorbase extraction")
             cmds.undo()     # Undo actorize operations to leave scene clean
-            return
+            raise PublishError("Actorize did not complete successfully, actorbase cannot be extracted")
 
         # Get the output path in the staging directory
         path = self.get_staged_output_path(instance)
