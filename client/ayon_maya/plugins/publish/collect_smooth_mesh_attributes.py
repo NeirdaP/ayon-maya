@@ -5,47 +5,63 @@ from ayon_maya.api import plugin, lib
 from maya import cmds  # noqa
 
 
-class CollectSubdivision(plugin.MayaInstancePlugin):
+class CollectSmoothMeshAttributes(plugin.MayaInstancePlugin):
     """Collect subdivision data on meshes of the instance.
     """
     order = pyblish.api.CollectorOrder + 0.3
     families = ["look", "lookanim"]
-    label = "Collect Subdivision"
+    label = "Collect Smooth Mesh Attributes"
 
-    subdiv_attributes = ["smoothLevel"]
-
+    attributes = [
+        "displaySmoothMesh",
+        "smoothLevel",
+        "displaySubdComps",
+        "useSmoothPreviewForRender",
+        "renderSmoothLevel",
+        "useGlobalSmoothDrawType",
+        "smoothDrawType",
+        "displayDisplacement",
+        "osdVertBoundary",
+        "osdFvarBoundary",
+        "osdFvarPropagateCorners",
+        "osdSmoothTriangles",
+        "osdCreaseMethod",
+        "enableOpenCL",
+        "smoothTessLevel",
+        "boundaryRule",
+        "continuity",
+        "smoothUVs",
+        "propagateEdgeHardness",
+        "keepMapBorders",
+        "keepBorder",
+        "keepHardEdge",
+    ]
 
     def get_attributes_for_node(self, node):
         node_attributes = {}
-        for attr in self.subdiv_attributes:
+        for attr in self.attributes:
             if not cmds.attributeQuery(attr, node=node, exists=True):
-                self.log.debug("Attribute {} does not exist on {}, skipping its collection".format(attr, node))
+                self.log.debug(f"Attribute {attr} does not exist on {node}, skipping its collection")
                 continue
 
             attribute = "{}.{}".format(node, attr)
             # We don't support mixed-type attributes yet.
             if cmds.attributeQuery(attr, node=node, multi=True):
-                self.log.warning("Attribute '{}' is mixed-type and is "
-                                "not supported yet.".format(attribute))
+                self.log.warning(
+                    f"Attribute '{attribute}' is mixed-type and is "
+                    "not supported yet."
+                )
                 continue
 
-            # Maya has a tendency to return string attribute values as
-            # `None` if it is an empty string and the attribute has never
-            # been set but is still at default value.
-            attribute_type = cmds.getAttr(attribute, type=True)
-            value = cmds.getAttr(attribute, asString=True)
+            # Maya returns None for string attributes that have never
+            # been set. Skip those to avoid storing invalid values.
+            value = cmds.getAttr(attribute)
             if value is None:
-                # If the attribute type is `string` we will convert it
-                # to enforce an empty string value
-                if attribute_type == "string":
-                    value = ""
-                else:
-                    continue
+                continue
 
             node_attributes[attr] = value
 
         return node_attributes
-
 
     def process(self, instance):
         """For each node in instance, check if it has the above subdiv_attributes, 
@@ -55,13 +71,13 @@ class CollectSubdivision(plugin.MayaInstancePlugin):
         should be running after the collect_look plugin. 
         """
         # Skip processing if lookData doesn't exist
-        lookData = instance.data.get("lookData")        
-        if not lookData:
+        look_data = instance.data.get("lookData")
+        if not look_data:
             self.log.warning("Instance look data does not exist, cannot add attributes (check plugin ordering)")
             return
 
         # Create nodes attributes list from scratch if it doesn't exist
-        if not lookData.get("attributes"):
+        if not look_data.get("attributes"):
             attributes = []
             for node in instance:
                 node_attributes = self.get_attributes_for_node(node)
@@ -76,6 +92,6 @@ class CollectSubdivision(plugin.MayaInstancePlugin):
             for entry in instance.data["lookData"]["attributes"]:
                 node = entry.get("name")
                 node_attributes = self.get_attributes_for_node(node)
-                for key,value in node_attributes.items():
+                for key, value in node_attributes.items():
                     entry["attributes"][key] = value
     
