@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Smooth level loader."""
+"""Smooth mesh attributes loader."""
 import ayon_maya
 import json
 from collections import defaultdict

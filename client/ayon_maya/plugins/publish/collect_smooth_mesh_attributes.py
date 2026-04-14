@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Maya subdivision level collector."""
+"""Maya smooth mesh attributes collector."""
 import pyblish.api
 from ayon_maya.api import plugin, lib
 from maya import cmds  # noqa
 
 
 class CollectSmoothMeshAttributes(plugin.MayaInstancePlugin):
-    """Collect subdivision data on meshes of the instance.
+    """Collect smooth mesh attributes of the instance.
     """
     order = pyblish.api.CollectorOrder + 0.3
     families = ["look", "lookanim"]

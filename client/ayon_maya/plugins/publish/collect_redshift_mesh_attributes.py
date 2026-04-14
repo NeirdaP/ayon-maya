@@ -5,8 +5,8 @@ from ayon_maya.plugins.publish import collect_smooth_mesh_attributes
 
 
 class CollectRedshiftMeshAttributes(collect_smooth_mesh_attributes.CollectSmoothMeshAttributes):
-    """Collect subdivision displacement data on meshes of the instance.
-    Behaves exactly the same as collect_subdivision except with different attributes.
+    """Collect redshift mesh attributes of the instance.
+    Behaves exactly the same as collect_smooth_mesh_attributes except with different attributes.
     """
     order = pyblish.api.CollectorOrder + 0.3
     families = ["look", "lookanim"]
