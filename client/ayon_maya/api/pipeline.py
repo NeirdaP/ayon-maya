@@ -121,10 +121,21 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             representation = ayon_api.get_representation_by_id(project_name=project, representation_id=container.get("representation"))
 
             # Retrieve the ignored extensions from settings (only process 3d containers)
-            repres_to_ignore = ayon_api.get_addon_project_settings("maya", 
-                                                                   __version__, 
-                                                                   project).get("ignore_representations").get("repres_to_ignore")
-            if representation.get("name") in [repre.get("representation") for repre in repres_to_ignore]:
+            ignore_representations = ayon_api.get_addon_project_settings("maya", 
+                                                                        __version__, 
+                                                                        project).get("ignore_representations")
+            ignore_list = []
+            print("ignore rep")
+            print(ignore_representations)
+            if ignore_representations: 
+                print("sublist")
+                print(ignore_representations.get("repres_to_ignore"))
+                ignore_list = [repre.get("representation") for repre in ignore_representations.get("repres_to_ignore")]
+
+            print("ignore list:")
+            print(ignore_list)
+                
+            if representation.get("name") in ignore_list:
                 continue
 
             repre_folder = ayon_api.get_folder_by_path(project_name=project, folder_path=representation.get("context").get("folder").get("path"))
