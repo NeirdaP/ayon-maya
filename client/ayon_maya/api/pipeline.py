@@ -93,6 +93,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def update_scene_from_casting(self):
         import ayon_api
         from ayon_maya.api.workfile_template_builder import MayaTemplateBuilder
+        from ..version import __version__
 
         context = self.get_current_context()
         project = context.get("project_name")
@@ -101,6 +102,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         # Update the template first. This will add new items as needed
         builder = MayaTemplateBuilder(self)
         builder.rebuild_template()
+        builder.emit_event(topic="template.finished")   # Necessary to force builder to evaluate run_script finished callback
 
         # Create casting dictionary based off ayon db
         casting_instances = {}
@@ -117,6 +119,14 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         containers = list(self.get_containers())
         for container in containers:
             representation = ayon_api.get_representation_by_id(project_name=project, representation_id=container.get("representation"))
+
+            # Retrieve the ignored extensions from settings (only process 3d containers)
+            repres_to_ignore = ayon_api.get_addon_project_settings("maya", 
+                                                                   __version__, 
+                                                                   project).get("ignore_representations").get("repres_to_ignore")
+            if representation.get("name") in [repre.get("representation") for repre in repres_to_ignore]:
+                continue
+
             repre_folder = ayon_api.get_folder_by_path(project_name=project, folder_path=representation.get("context").get("folder").get("path"))
             container["folder_name"] = repre_folder.get("name")
 
