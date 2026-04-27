@@ -125,15 +125,8 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                                                                         __version__, 
                                                                         project).get("ignore_representations")
             ignore_list = []
-            print("ignore rep")
-            print(ignore_representations)
             if ignore_representations: 
-                print("sublist")
-                print(ignore_representations.get("repres_to_ignore"))
                 ignore_list = [repre.get("representation") for repre in ignore_representations.get("repres_to_ignore")]
-
-            print("ignore list:")
-            print(ignore_list)
                 
             if representation.get("name") in ignore_list:
                 continue
