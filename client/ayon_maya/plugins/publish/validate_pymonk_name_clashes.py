@@ -1,3 +1,4 @@
+import pymonk
 import ayon_maya.api.action
 from ayon_core.pipeline.publish import (
     PublishValidationError,
@@ -18,8 +19,7 @@ class ValidatePymonkNameClashes(plugin.MayaInstancePlugin):
 
     @classmethod
     def get_invalid(cls, instance):
-        # Get the disallowed names from pymonk
-        import pymonk
+        # Get the disallowed names from pymonk   
         pymonk_nodes_to_create = pymonk.get_actorize_node_names_before_creation()
     
         # Node is invalid if it already exists in scene
@@ -35,8 +35,12 @@ class ValidatePymonkNameClashes(plugin.MayaInstancePlugin):
         invalid = self.get_invalid(instance)
         if invalid:
             names = "\n".join(invalid)
+
+            # Display the offending nodes, as well as all disallowed names from pymonk
             raise PublishValidationError(
                 title="Name clashes",
                 message="The following nodes in the scene clash with a " \
-                "name that will be created by pymonk actorize:\n{}".format(names)
+                "name that will be created by pymonk actorize:\n{} \
+                \n\nAll nodes created by pymonk:\n\n{}".format(names, 
+                                                               "\n".join(pymonk.get_actorize_node_names_before_creation()))
             )
