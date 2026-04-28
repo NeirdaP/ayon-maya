@@ -93,7 +93,7 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def update_scene_from_casting(self):
         import ayon_api
         from ayon_maya.api.workfile_template_builder import MayaTemplateBuilder
-        from ..version import __version__
+        from ayon_core.pipeline.context_tools import get_current_project_settings
 
         context = self.get_current_context()
         project = context.get("project_name")
@@ -121,13 +121,12 @@ class MayaHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             representation = ayon_api.get_representation_by_id(project_name=project, representation_id=container.get("representation"))
 
             # Retrieve the ignored extensions from settings (only process 3d containers)
-            ignore_representations = ayon_api.get_addon_project_settings("maya", 
-                                                                        __version__, 
-                                                                        project).get("ignore_representations")
+            ignore_representations = get_current_project_settings().get("maya").get("ignore_representations")
             ignore_list = []
             if ignore_representations: 
                 ignore_list = [repre.get("representation") for repre in ignore_representations.get("repres_to_ignore")]
                 
+            print("Pull from casting ignoring containers with the following representations: {}".format(ignore_list))
             if representation.get("name") in ignore_list:
                 continue
 
