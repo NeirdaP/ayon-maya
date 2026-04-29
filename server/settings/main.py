@@ -19,6 +19,9 @@ from .workfile_build_settings import ProfilesModel, DEFAULT_WORKFILE_SETTING
 from .templated_workfile_settings import (
     TemplatedProfilesModel, DEFAULT_TEMPLATED_WORKFILE_SETTINGS
 )
+from .workfile_management_settings import (
+    IgnoreRepresentationsModel, DEFAULT_REPRE_IGNORE_SETTINGS
+)
 
 
 def linear_unit_enum():
@@ -119,6 +122,9 @@ class MayaSettings(BaseSettingsModel):
     templated_workfile_build: TemplatedProfilesModel = SettingsField(
         default_factory=TemplatedProfilesModel,
         title="Templated Workfile Build Settings")
+    ignore_representations: IgnoreRepresentationsModel = SettingsField(
+        default_factory=IgnoreRepresentationsModel,
+        title="Pull from Casting")
 
     @validator("ext_mapping")
     def validate_unique_outputs(cls, value):
@@ -172,4 +178,5 @@ DEFAULT_MAYA_SETTING = {
     "load": DEFAULT_LOADERS_SETTING,
     "workfile_build": DEFAULT_WORKFILE_SETTING,
     "templated_workfile_build": DEFAULT_TEMPLATED_WORKFILE_SETTINGS,
+    "ignore_representations": DEFAULT_REPRE_IGNORE_SETTINGS,
 }
