@@ -2,6 +2,7 @@ import json
 import os
 from ayon_maya.api import plugin
 import ayon_api
+from ayon_core.pipeline.publish.input_versions import serialize_input_versions
 
 class ExtractAnimationInputs(plugin.MayaExtractorPlugin):
     """Extract the name of the folder from which the product that created this instance originates.
@@ -25,9 +26,17 @@ class ExtractAnimationInputs(plugin.MayaExtractorPlugin):
             "namespace": variant
         }
         if instance.data["inputVersions"]:
+            # Deserialize the input versions and get either version id or hero version id depending on settings
+            serialized_input_versions = serialize_input_versions(instance.data.get("inputVersions"))
+            serialized_input_version_ids = []
+            for version in serialized_input_versions:
+                if version.get("data").get("hero"):
+                    serialized_input_version_ids.append(version.get("data").get("hero_version_id"))
+                else:
+                    serialized_input_version_ids.append(version.get("version_id"))
             input_versions = ayon_api.get_versions(
                 project_name=project_name,
-                version_ids=instance.data["inputVersions"],
+                version_ids=serialized_input_version_ids,
                 fields=["productId"]
             )
             input_products = ayon_api.get_products(
