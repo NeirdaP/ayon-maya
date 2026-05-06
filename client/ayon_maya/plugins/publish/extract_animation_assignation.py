@@ -26,7 +26,7 @@ class ExtractAnimationInputs(plugin.MayaExtractorPlugin):
             "namespace": variant
         }
         if instance.data["inputVersions"]:
-            # Deserialize the input versions and get either version id or hero version id depending on settings
+            # Serialize the input versions and get either version id or hero version id depending on settings
             serialized_input_versions = serialize_input_versions(instance.data.get("inputVersions"))
             serialized_input_version_ids = []
             for version in serialized_input_versions:
