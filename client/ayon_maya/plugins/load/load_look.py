@@ -20,7 +20,8 @@ class LookLoader(ayon_maya.api.plugin.ReferenceLoader):
 
     product_base_types = {"look"}
     product_types = {"look", "lookanim"}
-    representations = {"ma"}
+    representations = {"*"}
+    extensions = {"ma"}
 
     label = "Reference look"
     order = -10

@@ -8,13 +8,15 @@ from ayon_maya.api.lib import maintained_selection, set_id, \
 from ayon_maya.api import plugin
 from maya import cmds
 
+from ayon_core.pipeline.publish import PublishError
+
 
 @undo_chunk()
 def create_pymonk_rig(transforms, log):
     """
     Run actorize on the given transform(s) and prepare the newly created nodes for use by Ayon
     """
-    from pymonk.src.api.run import actorize_geometry_transforms
+    from pymonk import actorize_geometry_transforms
     from ayon_core.pipeline.context_tools import get_current_folder_entity, \
                                                     get_current_project_name
 
@@ -41,8 +43,10 @@ def create_pymonk_rig(transforms, log):
         # Get all the newly created nodes and filter for the ones that should have cbids
         all_created_nodes = []
         for rig_set in pymonk_rig_sets:
-            all_created_nodes.append(rig_set)
-            all_created_nodes.extend(cmds.listRelatives(rig_set, allDescendents=True) or [])
+            if cmds.objExists(rig_set):
+                all_created_nodes.append(rig_set)
+                all_created_nodes.extend(cmds.listRelatives(rig_set, allDescendents=True) or [])
+                rig_selection_sets.append(rig_set)
         all_created_nodes.extend(rig_selection_sets)
         filtered_nodes = get_id_required_nodes(nodes=all_created_nodes)
 
@@ -55,7 +59,7 @@ def create_pymonk_rig(transforms, log):
         log.debug(traceback.format_exc())
         return
 
-    return pymonk_rig_sets + rig_selection_sets
+    return rig_selection_sets
 
 
 class ExtractActorBase(plugin.MayaExtractorPlugin):
@@ -145,9 +149,8 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         self.prepare_scene(instance)
 
         if not instance.data.get("rig_sets"):
-            self.log.warning("Actorize did not complete successfully, skipping actorbase extraction")
             cmds.undo()     # Undo actorize operations to leave scene clean
-            return
+            raise PublishError("Actorize did not complete successfully, actorbase cannot be extracted")
 
         # Get the output path in the staging directory
         path = self.get_staged_output_path(instance)

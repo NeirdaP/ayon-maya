@@ -81,9 +81,8 @@ class MayaPlaceholderLoadMixin(PlaceholderLoadMixin):
         representations = super()._get_representations(placeholder)
         filtered_representations = []
         folder_type_filter = placeholder.data.get("folder_type_filter", "")
-        folder_type_filter_list = folder_type_filter.strip().split(",")
-
-        if folder_type_filter_list:
+        if folder_type_filter:
+            folder_type_filter_list = folder_type_filter.strip().split(",")
             for representation in representations:
                 folder_type = representation["context"]["folder"]["type"]
                 if representation["data"].get(ADDITIONAL_ANIMATION_DATA_KEY):
