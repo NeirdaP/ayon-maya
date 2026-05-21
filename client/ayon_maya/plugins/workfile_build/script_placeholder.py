@@ -130,6 +130,10 @@ class MayaPlaceholderScriptPlugin(MayaPlaceholderPlugin):
             placeholders
         )
         for placeholder in placeholders:
+            # Mark this run_script placeholder as not having run yet. 
+            # This value will get changed to True by the templates during the first scene build
+            placeholder.data["run_once"] = False
+
             prepare_script = placeholder.data.get("prepare_script")
             if not prepare_script:
                 continue
