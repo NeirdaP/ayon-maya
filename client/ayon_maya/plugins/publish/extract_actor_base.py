@@ -20,12 +20,10 @@ def create_pymonk_rig(transforms, log):
 
     project = get_current_project_name()
     asset = get_current_folder_entity().get("name")
-
-    pymonk_rig_sets = ["all_anim_set", "all_skin_set", "rig_root_grp"]
     rig_selection_sets = []
 
     try:
-        actorize_geometry_transforms(transforms, asset, project)
+        actorize_asset = actorize_geometry_transforms(transforms, asset, project)
 
         # Place the created mesh group and anim group into appropriate selection sets
         for child_grp in cmds.listRelatives("rig_root_grp") or []:
@@ -39,13 +37,13 @@ def create_pymonk_rig(transforms, log):
             rig_selection_sets.append(set_name)
 
         # Get all the newly created nodes and filter for the ones that should have cbids
-        all_created_nodes = []
-        for rig_set in pymonk_rig_sets:
-            if cmds.objExists(rig_set):
-                all_created_nodes.append(rig_set)
-                all_created_nodes.extend(cmds.listRelatives(rig_set, allDescendents=True) or [])
-                rig_selection_sets.append(rig_set)
-        all_created_nodes.extend(rig_selection_sets)
+        all_created_nodes = set()
+        for item in actorize_asset.registered_nodes:
+            item = str(item)
+            all_created_nodes.add(item)
+            all_created_nodes.update(cmds.listRelatives(item, allDescendents=True) or [])
+
+        all_created_nodes.update(rig_selection_sets)
         filtered_nodes = get_id_required_nodes(nodes=all_created_nodes)
 
         # Assign cbids to the new nodes
@@ -57,7 +55,7 @@ def create_pymonk_rig(transforms, log):
         log.debug(traceback.format_exc())
         return
 
-    return rig_selection_sets
+    return all_created_nodes
 
 
 class ExtractActorBase(plugin.MayaExtractorPlugin):
