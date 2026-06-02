@@ -105,7 +105,6 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
 
         # Store information about the sets we made and the group(s) we moved
         instance.data["rig_sets"] = created_sets
-        instance.data["moved"] = moved
         
 
     def get_staged_output_path(self, instance):
@@ -139,21 +138,8 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         return os.path.join(dir_path, filename)
 
 
-    def process(self, instance):
-        """Plugin entry point."""
-
-        # Prepare the scene by running pymonk actorize, which will 
-        # reorganize things into groups and create controls
-        self.prepare_scene(instance)
-
-        if not instance.data.get("rig_sets"):
-            cmds.undo()     # Undo actorize operations to leave scene clean
-            raise PublishError("Actorize did not complete successfully, actorbase cannot be extracted")
-
-        # Get the output path in the staging directory
-        path = self.get_staged_output_path(instance)
-
-        # Perform extraction
+    @undo_chunk()
+    def export_actorbase_to_staging(self, instance, path):
         self.log.debug("Performing extraction ...")
         with maintained_selection():
             cmds.select(clear=True)
@@ -170,6 +156,22 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
                       expressions=True,
                       constructionHistory=True)
 
+
+    def process(self, instance):
+        """Plugin entry point."""
+
+        # Prepare the scene by running pymonk actorize, which will 
+        # reorganize things into groups and create controls
+        self.prepare_scene(instance)
+
+        if not instance.data.get("rig_sets"):
+            cmds.undo()     # Undo actorize operations to leave scene clean
+            raise PublishError("Actorize did not complete successfully, actorbase cannot be extracted")
+
+        # Get the output path in the staging directory
+        path = self.get_staged_output_path(instance)
+        self.export_actorbase_to_staging(instance, path)
+
         if "representations" not in instance.data:
             instance.data["representations"] = []
 
@@ -181,15 +183,7 @@ class ExtractActorBase(plugin.MayaExtractorPlugin):
         }
         instance.data["representations"].append(representation)
 
-        # Move the displaced contents of the instance back to wherever they were before
-        for moved, parent in instance.data.get("moved").items():
-            if not parent:
-                cmds.parent(moved, world=True)
-            else:
-                cmds.parent(moved, parent, relative=True)
-
-        # Clean up the rig sets that pymonk created
-        for item in instance.data.get("rig_sets"):
-            self.remove_from_scene(item)
+        cmds.undo()     # Undo the export_actorbase_to_staging chunk
+        cmds.undo()     # Undo the pymonk_create_rig chunk
 
         self.log.debug("Extracted instance '%s' to: %s", instance.name, path)
