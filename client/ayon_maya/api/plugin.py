@@ -832,6 +832,9 @@ class ReferenceLoader(Loader):
         namespace=None,
         options=None
     ):
+        from ayon_maya.plugins.publish.collect_additional_animation_data import ADDITIONAL_ANIMATION_DATA_KEY, \
+            NAMESPACE_KEY
+
         path = self.filepath_from_context(context)
         assert os.path.exists(path), "%s does not exist." % path
 
@@ -844,7 +847,8 @@ class ReferenceLoader(Loader):
         loaded_containers = []
         for c in range(0, count):
             namespace = lib.get_custom_namespace(custom_namespace)
-            namespace = self._override_namespace_from_json(namespace, context)
+            if context["representation"]["data"].get(ADDITIONAL_ANIMATION_DATA_KEY):
+                namespace = context["representation"]["data"][ADDITIONAL_ANIMATION_DATA_KEY][NAMESPACE_KEY]
             group_name = "{}:{}".format(
                 namespace,
                 custom_group_name.format(namespace=namespace)
@@ -1104,22 +1108,6 @@ class ReferenceLoader(Loader):
             "ma": ["mb"],
             "mb": ["ma"]
         }.get(representation_name, [])
-        
-    def _override_namespace_from_json(self, original_namespace: str, context: dict):
-        try:
-            representations = ayon_api.get_representations(
-                project_name=context["project"]["name"],
-                version_ids={context["version"]["id"]},
-                representation_names={"json"}
-            )
-            json_path = get_representation_path(next(representations))
-            with open(json_path, "r") as file:
-                json_data = json.load(file)
-                namespace = json_data['namespace']
-                self.log.info(f"Found json containing namespace information at {json_path}. Namespace is now {namespace}")
-            return namespace
-        except Exception:
-            return original_namespace
 
 
 class MayaLoader(LoaderPlugin):
