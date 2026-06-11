@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Smooth level loader."""
+"""Smooth mesh attributes loader."""
 import ayon_maya
 import json
 from collections import defaultdict
 
 
-class SmoothLevelLoader(ayon_maya.api.plugin.Loader):
+class SmoothMeshAttributesLoader(ayon_maya.api.plugin.Loader):
     """
-    Specific loader for smooth level
+    Specific loader for smooth mesh attributes
     """
 
     product_types = {"look"}
     representations = {"json"}
 
-    label = "Import and assign smooth level"
+    label = "Import and assign smooth mesh attributes"
     order = -10
     icon = "signal"
     color = "orange"
@@ -30,13 +30,28 @@ class SmoothLevelLoader(ayon_maya.api.plugin.Loader):
         Load Smooth level settings based on uuid.
         """
         smooth_attributes = [
+            "displaySmoothMesh",
             "smoothLevel",
-            "rsEnableDisplacement",
-            "rsMaxDisplacement",
-            "rsDisplacementScale",
-            "aiDispHeight",
-            "aiDispPadding",
-            "aiDispZeroValue"
+            "displaySubdComps",
+            "useSmoothPreviewForRender",
+            "renderSmoothLevel",
+            "useGlobalSmoothDrawType",
+            "smoothDrawType",
+            "displayDisplacement",
+            "osdVertBoundary",
+            "osdFvarBoundary",
+            "osdFvarPropagateCorners",
+            "osdSmoothTriangles",
+            "osdCreaseMethod",
+            "enableOpenCL",
+            "smoothTessLevel",
+            "boundaryRule",
+            "continuity",
+            "smoothUVs",
+            "propagateEdgeHardness",
+            "keepMapBorders",
+            "keepBorder",
+            "keepHardEdge",
         ]
         # Get all node uuids from scene
         scene_uuids = defaultdict(list)  # uuid is synonym of ayon cbid here
@@ -60,15 +75,19 @@ class SmoothLevelLoader(ayon_maya.api.plugin.Loader):
 
                 attribute_value = attributes.get(smooth_attribute)
 
-                for mesh_name in scene_uuids.get(mesh_uuid):
-                    if not mesh_name:
-                        self.log.info(f"Warning: Node '{mesh_name}' with uuid '{mesh_uuid}' was not found in scene")
-                        continue
+                matching_nodes = scene_uuids.get(mesh_uuid)
+                if not matching_nodes:
+                    self.log.warning(f"Node with uuid '{mesh_uuid}' was not found in scene")
+                    continue
 
-                    cmds.setAttr(f"{mesh_name}.displaySmoothMesh", 2) # Tick the 'Smooth Mesh Preview' checkbox and set the 'Display' to 'Smooth Mesh'
+                for mesh_name in matching_nodes:
+
                     attribute = f"{mesh_name}.{smooth_attribute}"
                     try:
-                        cmds.setAttr(attribute, attribute_value)
+                        if isinstance(attribute_value, str):
+                            cmds.setAttr(attribute, attribute_value, type="string")
+                        else:
+                            cmds.setAttr(attribute, attribute_value)
                     except Exception as e:
                         self.log.info(f"Failed setting attribute '{attribute}' with value '{attribute_value}': {e}")
 
